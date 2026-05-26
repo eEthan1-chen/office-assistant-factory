@@ -1,6 +1,6 @@
-# Office Assistant Factory / Coze Studio Snapshot
+# Office Assistant Factory
 
-这是一个本地整理后的 Coze Studio 运行快照，已默认开启 `OFFICE_FACTORY_MINIMAL=true`，用于办公室助手工厂的最小化部署演示。
+这是一个本地整理后的 Office Assistant Factory 运行快照，已默认开启 `OFFICE_FACTORY_MINIMAL=true`，用于办公室助手工厂的最小化部署演示。
 
 ## 快速开始
 
@@ -9,8 +9,8 @@
 最短流程如下：
 
 ```bash
-git clone https://github.com/eEthan1-chen/coze-studio.git
-cd coze-studio
+git clone https://github.com/eEthan1-chen/office-assistant-factory.git
+cd office-assistant-factory
 
 # 准备运行配置
 cp bin/.env.debug bin/.env

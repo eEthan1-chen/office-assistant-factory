@@ -1,6 +1,6 @@
 # 安装运行教程
 
-本文说明如何从 GitHub 仓库拉取代码，并在本地启动 Office Assistant Factory / Coze Studio 快照。
+本文说明如何从 GitHub 仓库拉取代码，并在本地启动 Office Assistant Factory 快照。
 
 ## 1. 环境要求
 
@@ -25,8 +25,8 @@
 ## 2. 克隆仓库
 
 ```bash
-git clone https://github.com/eEthan1-chen/coze-studio.git
-cd coze-studio
+git clone https://github.com/eEthan1-chen/office-assistant-factory.git
+cd office-assistant-factory
 ```
 
 ## 3. 准备运行配置
