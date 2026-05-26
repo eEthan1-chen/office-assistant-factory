@@ -1,0 +1,5 @@
+{
+  "../../../frontend/packages/arch/idl": "../../../frontend/packages/arch/idl:o1TU+ItdutVtonsywWY43Uo7/adFroPq0UULeJaMXRY=:",
+  "/@types/node@18.18.9": "sha512-0f5klcuImLnG4Qreu9hPj/rEfFq6YRc5n2mAjSsH+ec/mJL+3voBH0+8T7o8RpFjH7ovc+TRsL/c7OYIQsPTfQ==",
+  "/undici-types@5.26.5": "sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA=="
+}

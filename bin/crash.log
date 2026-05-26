@@ -1,0 +1,13 @@
+panic: create netpoll listener fail: listen tcp :8888: bind: address already in use
+
+goroutine 216 [running]:
+github.com/cloudwego/hertz/pkg/network/netpoll.(*transporter).ListenAndServe(0x140013aa510, 0x14000f2a980)
+	/Users/ethan/go/pkg/mod/github.com/cloudwego/hertz@v0.10.2/pkg/network/netpoll/transport.go:100 +0x55c
+github.com/cloudwego/hertz/pkg/route.(*Engine).listenAndServe(0x1400154e488)
+	/Users/ethan/go/pkg/mod/github.com/cloudwego/hertz@v0.10.2/pkg/route/engine.go:418 +0x110
+github.com/cloudwego/hertz/pkg/route.(*Engine).Run(0x1400154e488)
+	/Users/ethan/go/pkg/mod/github.com/cloudwego/hertz@v0.10.2/pkg/route/engine.go:385 +0x168
+github.com/cloudwego/hertz/pkg/app/server.(*Hertz).Spin.func1()
+	/Users/ethan/go/pkg/mod/github.com/cloudwego/hertz@v0.10.2/pkg/app/server/hertz.go:60 +0x2c
+created by github.com/cloudwego/hertz/pkg/app/server.(*Hertz).Spin in goroutine 1
+	/Users/ethan/go/pkg/mod/github.com/cloudwego/hertz@v0.10.2/pkg/app/server/hertz.go:59 +0x184

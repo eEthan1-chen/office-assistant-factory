@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunk_coze_studio_app=self.webpackChunk_coze_studio_app||[]).push([["1032"],{23690:function(n,o,t){t.r(o),t.d(o,{ModelDescription:function(){return i}});var a=t(51064),u=t(37924),i=n=>{var{descriptionGroupList:o}=n;return(0,a.jsx)(u.HK,{autoFixSyntax:{autoFixEnding:!1},markDown:o.map(n=>{var{group_name:o,desc:t}=n;return"".concat(o,"\n").concat(null==t?void 0:t.join("\n"))}).join("\n\n")})}}}]);
+//# sourceMappingURL=1032.dcdc2d4f.js.map
