@@ -173,6 +173,8 @@ func getOCRType() config.OCRType {
 	ocrTypeStr := os.Getenv("OCR_TYPE")
 
 	switch ocrTypeStr {
+	case "disabled":
+		return config.OCRType(-1)
 	case "ve":
 		return config.OCRType_Volcengine
 	case "paddleocr":

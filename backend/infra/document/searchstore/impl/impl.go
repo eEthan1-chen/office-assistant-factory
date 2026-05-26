@@ -42,20 +42,26 @@ type Manager = searchstore.Manager
 func New(ctx context.Context, conf *config.KnowledgeConfig, es es.Client) ([]Manager, error) {
 	// es full text search
 	esSearchstoreManager := elasticsearch.NewManager(&elasticsearch.ManagerConfig{Client: es})
+	managers := []searchstore.Manager{esSearchstoreManager}
 
 	// vector search
 	mgr, err := getVectorStore(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("init vector store failed, err=%w", err)
 	}
+	if mgr != nil {
+		managers = append(managers, mgr)
+	}
 
-	return []searchstore.Manager{esSearchstoreManager, mgr}, nil
+	return managers, nil
 }
 
 func getVectorStore(ctx context.Context, conf *config.KnowledgeConfig) (searchstore.Manager, error) {
 	vsType := os.Getenv("VECTOR_STORE_TYPE")
 
 	switch vsType {
+	case "", "disabled":
+		return nil, nil
 	case "milvus":
 		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 		defer cancel()

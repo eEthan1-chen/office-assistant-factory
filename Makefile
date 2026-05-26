@@ -68,13 +68,13 @@ build_docker:
 
 web_env:
 	@if [ ! -f "$(WEB_ENV_FILE)" ]; then \
-		echo "Env file '$(WEB_ENV_FILE)' not found, using example env..."; \
-		cp ./docker/.env.example $(WEB_ENV_FILE); \
+		echo "Env file '$(WEB_ENV_FILE)' not found, using Office Assistant Factory example env..."; \
+		cp ./docker/.env.example.office $(WEB_ENV_FILE); \
 	fi
 
 web: web_env
 	@echo "Start web server in docker"
-	@docker compose -f docker/docker-compose.yml --env-file $(WEB_ENV_FILE) up -d
+	@docker compose -f docker/docker-compose.yml --env-file $(WEB_ENV_FILE) up -d --build
 
 down_web:
 	@echo "Stop web server in docker"

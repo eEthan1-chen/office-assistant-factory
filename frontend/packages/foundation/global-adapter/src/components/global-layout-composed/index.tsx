@@ -34,6 +34,8 @@ import {
 import { AccountDropdown } from '../account-dropdown';
 import { useHasSider } from './hooks/use-has-sider';
 
+const isOfficeFactoryMinimal = process.env.OFFICE_FACTORY_MINIMAL === 'true';
+
 export const GlobalLayoutComposed: FC<PropsWithChildren> = ({ children }) => {
   const config = useRouteConfig();
   const hasSider = useHasSider();
@@ -67,13 +69,17 @@ export const GlobalLayoutComposed: FC<PropsWithChildren> = ({ children }) => {
             path: '/space',
             dataTestId: 'layout_workspace-button',
           },
-          {
-            title: I18n.t('menu_title_store'),
-            icon: <IconCozCompass />,
-            activeIcon: <IconCozCompassFill />,
-            path: '/explore',
-            dataTestId: 'layout_explore-button',
-          },
+          ...(!isOfficeFactoryMinimal
+            ? [
+                {
+                  title: I18n.t('menu_title_store'),
+                  icon: <IconCozCompass />,
+                  activeIcon: <IconCozCompassFill />,
+                  path: '/explore',
+                  dataTestId: 'layout_explore-button',
+                },
+              ]
+            : []),
         ]}
         extras={[
           {

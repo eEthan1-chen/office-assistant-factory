@@ -42,7 +42,7 @@ const mergedConfig = defineConfig({
     ],
   },
   html: {
-    title: '扣子 Studio',
+    title: 'Office Assistant Factory',
     favicon: './assets/favicon.png',
     template: './index.html',
     crossorigin: 'anonymous',
@@ -100,6 +100,9 @@ const mergedConfig = defineConfig({
       ),
       'process.env.TARO_PLATFORM': JSON.stringify('web'),
       'process.env.SUPPORT_TARO_POLYFILL': JSON.stringify('disabled'),
+      'process.env.OFFICE_FACTORY_MINIMAL': JSON.stringify(
+        process.env.OFFICE_FACTORY_MINIMAL || '',
+      ),
       'process.env.RUNTIME_ENTRY': JSON.stringify('@coze-dev/runtime'),
       'process.env.TARO_ENV': JSON.stringify('h5'),
       ENABLE_COVERAGE: JSON.stringify(false),

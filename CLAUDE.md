@@ -4,23 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Coze Studio is an all-in-one AI agent development platform with both frontend (React + TypeScript) and backend (Go) components. The project uses a sophisticated monorepo architecture managed by Rush.js with 135+ frontend packages organized in a hierarchical dependency system.
+Office Assistant Factory is a source-based enterprise office assistant project built on the open-source Coze Studio codebase. It contains both frontend (React + TypeScript) and backend (Go) components, and preserves the upstream Rush.js monorepo architecture so future Coze Studio source updates and internal package dependencies remain manageable.
+
+Competition-specific customization lives in configuration, branding, and office scenario templates. Do not rename internal package scopes such as `@coze-studio/*` unless you are also updating the full Rush workspace and all imports.
 
 ## Development Commands
 
 ### Environment Setup
 ```bash
 # Clone and setup
-git clone https://github.com/coze-dev/coze-studio.git
-cd coze-studio
+git clone https://github.com/eEthan1-chen/office-assistant-factory.git
+cd office-assistant-factory
 
 # Install frontend dependencies
 rush update
 
 # For Docker-based development
 cd docker
-cp .env.example .env
-# Configure model settings in backend/conf/model/
+cp .env.example.office .env
+# Configure enterprise OpenAI-compatible model gateway settings in .env
 docker compose up -d
 # Access at http://localhost:8888
 ```
@@ -144,6 +146,15 @@ Before deployment, configure AI models in `backend/conf/model/`:
 1. Copy template from `backend/conf/model/template/`
 2. Set `id`, `meta.conn_config.api_key`, and `meta.conn_config.model`
 3. Supported providers: OpenAI, Volcengine Ark, Claude, Gemini, Qwen, DeepSeek, Ollama
+
+Office Assistant Factory also ships a Docker env template at `docker/.env.example.office` that defaults to:
+
+- `OFFICE_FACTORY_MINIMAL=true`
+- `MODEL_PROTOCOL_0=openai`
+- `MODEL_NAME_0=企业大模型网关`
+- `MODEL_ID_0=office-assistant`
+- `VECTOR_STORE_TYPE=disabled`
+- `OCR_TYPE=disabled`
 
 ## Testing Strategy
 

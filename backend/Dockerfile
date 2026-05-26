@@ -55,7 +55,7 @@ COPY backend/infra/coderunner/impl/script/sandbox.py /app/sandbox.py
 # Copy static resources
 # COPY backend/static /app/resources/static/
 COPY backend/conf /app/resources/conf/
-COPY docker/.env.example /app/.env
+COPY docker/.env.example.office /app/.env
 # COPY docker/.env.ve /app/.env
 # COPY docker/cert.pem /app/cert.pem
 # COPY docker/key.pem /app/key.pem

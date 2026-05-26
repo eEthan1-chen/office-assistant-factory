@@ -1,0 +1,87 @@
+skills:
+  - scene_type: meeting_room_booking
+    keywords:
+      - 会议室
+      - 会议
+      - 预订
+      - 预约
+      - 日程冲突
+      - 冲突
+    plugin_templates:
+      - system_name: 会议室管理系统
+        interface_key: meeting_room.query_availability
+        operation_type: read,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 查询会议室空闲时段、容量、地点和设备能力。
+      - system_name: 会议室管理系统
+        interface_key: meeting_room.reserve
+        operation_type: write,auto_booking,external_call
+        risk_level: high
+        placeholder_status: placeholder
+        description: 在用户确认后发起会议室预订占位，默认不自动执行。
+    workflow_templates:
+      - system_name: 日程与会议室系统
+        interface_key: meeting_room.conflict_check_and_confirm
+        operation_type: schedule,external_call
+        risk_level: high
+        placeholder_status: placeholder
+        description: 检查日程冲突、推荐可选会议室，并生成需用户确认的预订方案。
+
+  - scene_type: task_followup
+    keywords:
+      - 任务
+      - 待办
+      - 跟进
+      - 逾期
+      - 优先级
+      - 提醒
+    plugin_templates:
+      - system_name: 任务管理系统
+        interface_key: task.query_due_items
+        operation_type: read,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 查询个人待办、到期任务、逾期任务和优先级。
+      - system_name: 任务管理系统
+        interface_key: task.create_reminder_draft
+        operation_type: schedule,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 生成提醒草稿，状态变更和发送动作必须由用户确认。
+    workflow_templates:
+      - system_name: 任务管理系统
+        interface_key: task.daily_followup_digest
+        operation_type: schedule,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 按天汇总待办、逾期项、优先级和跟进建议。
+
+  - scene_type: project_weekly_report
+    keywords:
+      - 项目
+      - 周报
+      - 进展
+      - 里程碑
+      - 风险
+      - 摘要
+    plugin_templates:
+      - system_name: 项目管理系统
+        interface_key: project.query_progress
+        operation_type: read,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 查询项目进展、里程碑、风险和负责人信息。
+      - system_name: 项目管理系统
+        interface_key: project.weekly_report_draft
+        operation_type: read,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 生成项目周报草稿，不自动发送或修改项目数据。
+    workflow_templates:
+      - system_name: 项目管理系统
+        interface_key: project.weekly_summary
+        operation_type: schedule,external_call
+        risk_level: medium
+        placeholder_status: placeholder
+        description: 汇总项目进度、风险、阻塞项和下周计划，形成可编辑周报草稿。

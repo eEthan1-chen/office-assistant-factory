@@ -28,6 +28,8 @@ import { Space, Avatar, Typography } from '@coze-arch/coze-design';
 
 import { SpaceSubModuleEnum } from '@/const';
 
+const isOfficeFactoryMinimal = process.env.OFFICE_FACTORY_MINIMAL === 'true';
+
 export const WorkspaceSubMenu = () => {
   const { subMenuKey } = useRouteConfig();
 
@@ -41,13 +43,17 @@ export const WorkspaceSubMenu = () => {
       path: SpaceSubModuleEnum.DEVELOP,
       dataTestId: 'navigation_workspace_develop',
     },
-    {
-      icon: <IconCozKnowledge />,
-      activeIcon: <IconCozKnowledgeFill />,
-      title: () => I18n.t('navigation_workspace_library', {}, 'Library'),
-      path: SpaceSubModuleEnum.LIBRARY,
-      dataTestId: 'navigation_workspace_library',
-    },
+    ...(!isOfficeFactoryMinimal
+      ? [
+          {
+            icon: <IconCozKnowledge />,
+            activeIcon: <IconCozKnowledgeFill />,
+            title: () => I18n.t('navigation_workspace_library', {}, 'Library'),
+            path: SpaceSubModuleEnum.LIBRARY,
+            dataTestId: 'navigation_workspace_library',
+          },
+        ]
+      : []),
   ];
 
   const headerNode = (

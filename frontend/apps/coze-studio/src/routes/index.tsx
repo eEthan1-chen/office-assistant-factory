@@ -48,6 +48,8 @@ import {
   OAuthConsentConfirmPage,
 } from './async-components';
 
+const isOfficeFactoryMinimal = process.env.OFFICE_FACTORY_MINIMAL === 'true';
+
 export const router: ReturnType<typeof createBrowserRouter> =
   createBrowserRouter([
     // Document routing
@@ -184,68 +186,72 @@ export const router: ReturnType<typeof createBrowserRouter> =
                   }),
                 },
 
-                // resource library
-                {
-                  path: 'library',
-                  Component: Library,
-                  loader: () => ({
-                    subMenuKey: SpaceSubModuleEnum.LIBRARY,
-                  }),
-                },
+                ...(!isOfficeFactoryMinimal
+                  ? [
+                      // resource library
+                      {
+                        path: 'library',
+                        Component: Library,
+                        loader: () => ({
+                          subMenuKey: SpaceSubModuleEnum.LIBRARY,
+                        }),
+                      },
 
-                // Knowledge Base Resources
-                {
-                  path: 'knowledge',
-                  children: [
-                    {
-                      path: ':dataset_id',
-                      element: <KnowledgePreview />,
-                    },
-                    {
-                      path: ':dataset_id/upload',
-                      element: <KnowledgeUpload />,
-                    },
-                  ],
-                  loader: () => ({
-                    pageModeByQuery: true,
-                  }),
-                },
+                      // Knowledge Base Resources
+                      {
+                        path: 'knowledge',
+                        children: [
+                          {
+                            path: ':dataset_id',
+                            element: <KnowledgePreview />,
+                          },
+                          {
+                            path: ':dataset_id/upload',
+                            element: <KnowledgeUpload />,
+                          },
+                        ],
+                        loader: () => ({
+                          pageModeByQuery: true,
+                        }),
+                      },
 
-                // database resources
-                {
-                  path: 'database',
-                  children: [
-                    {
-                      path: ':table_id',
-                      element: <DatabaseDetail />,
-                    },
-                  ],
-                  loader: () => ({
-                    showMobileTips: true,
-                    pageModeByQuery: true,
-                  }),
-                },
+                      // database resources
+                      {
+                        path: 'database',
+                        children: [
+                          {
+                            path: ':table_id',
+                            element: <DatabaseDetail />,
+                          },
+                        ],
+                        loader: () => ({
+                          showMobileTips: true,
+                          pageModeByQuery: true,
+                        }),
+                      },
 
-                // plugin resources
-                {
-                  path: 'plugin/:plugin_id',
-                  Component: PluginLayout,
-                  children: [
-                    {
-                      index: true,
-                      Component: PluginPage,
-                    },
-                    {
-                      path: 'tool/:tool_id',
-                      children: [
-                        {
-                          index: true,
-                          Component: PluginToolPage,
-                        },
-                      ],
-                    },
-                  ],
-                },
+                      // plugin resources
+                      {
+                        path: 'plugin/:plugin_id',
+                        Component: PluginLayout,
+                        children: [
+                          {
+                            index: true,
+                            Component: PluginPage,
+                          },
+                          {
+                            path: 'tool/:tool_id',
+                            children: [
+                              {
+                                index: true,
+                                Component: PluginToolPage,
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
               ],
             },
           ],
@@ -261,49 +267,53 @@ export const router: ReturnType<typeof createBrowserRouter> =
           }),
         },
 
-        // search
-        {
-          path: 'search/:word',
-          Component: SearchPage,
-          loader: () => ({
-            hasSider: true,
-            requireAuth: true,
-          }),
-        },
+        ...(!isOfficeFactoryMinimal
+          ? [
+              // search
+              {
+                path: 'search/:word',
+                Component: SearchPage,
+                loader: () => ({
+                  hasSider: true,
+                  requireAuth: true,
+                }),
+              },
 
-        // explore
-        {
-          path: 'explore',
-          Component: null,
-          loader: () => ({
-            hasSider: true,
-            requireAuth: true,
-            subMenu: exploreSubMenu,
-            menuKey: BaseEnum.Explore,
-          }),
-          children: [
-            {
-              index: true,
-              element: <Navigate to="plugin" replace />,
-            },
-            // plugin store
-            {
-              path: 'plugin',
-              element: <ExplorePluginPage />,
-              loader: () => ({
-                type: 'plugin',
-              }),
-            },
-            // template
-            {
-              path: 'template',
-              element: <ExploreTemplatePage />,
-              loader: () => ({
-                type: 'template',
-              }),
-            },
-          ],
-        },
+              // explore
+              {
+                path: 'explore',
+                Component: null,
+                loader: () => ({
+                  hasSider: true,
+                  requireAuth: true,
+                  subMenu: exploreSubMenu,
+                  menuKey: BaseEnum.Explore,
+                }),
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to="plugin" replace />,
+                  },
+                  // plugin store
+                  {
+                    path: 'plugin',
+                    element: <ExplorePluginPage />,
+                    loader: () => ({
+                      type: 'plugin',
+                    }),
+                  },
+                  // template
+                  {
+                    path: 'template',
+                    element: <ExploreTemplatePage />,
+                    loader: () => ({
+                      type: 'template',
+                    }),
+                  },
+                ],
+              },
+            ]
+          : []),
       ],
     },
   ]);

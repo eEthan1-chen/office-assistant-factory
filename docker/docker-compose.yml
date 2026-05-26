@@ -1,11 +1,11 @@
-name: coze-studio
+name: office-assistant-factory
 x-env-file: &env_file
   - .env
 
 services:
   mysql:
     image: mysql:8.4.5
-    container_name: coze-mysql
+    container_name: office-assistant-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -82,7 +82,7 @@ services:
 
   redis:
     image: bitnamilegacy/redis:8.0
-    container_name: coze-redis
+    container_name: office-assistant-redis
     restart: always
     user: root
     privileged: true
@@ -115,7 +115,7 @@ services:
       - coze-network
   elasticsearch:
     image: bitnamilegacy/elasticsearch:8.18.0
-    container_name: coze-elasticsearch
+    container_name: office-assistant-elasticsearch
     restart: always
     user: root
     privileged: true
@@ -202,7 +202,7 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2025-06-13T11-33-47Z-cpuv1
-    container_name: coze-minio
+    container_name: office-assistant-minio
     user: root
     privileged: true
     restart: always
@@ -254,8 +254,9 @@ services:
       - coze-network
 
   etcd:
+    profiles: ['vector']
     image: bitnamilegacy/etcd:3.5
-    container_name: coze-etcd
+    container_name: office-assistant-etcd
     user: root
     restart: always
     privileged: true
@@ -290,7 +291,8 @@ services:
       - coze-network
 
   milvus:
-    container_name: coze-milvus
+    profiles: ['vector']
+    container_name: office-assistant-milvus
     image: milvusdb/milvus:v2.5.10
     user: root
     privileged: true
@@ -334,7 +336,7 @@ services:
       - coze-network
   nsqlookupd:
     image: nsqio/nsq:v1.2.1
-    container_name: coze-nsqlookupd
+    container_name: office-assistant-nsqlookupd
     command: /nsqlookupd
     restart: always
     # ports:
@@ -351,7 +353,7 @@ services:
 
   nsqd:
     image: nsqio/nsq:v1.2.1
-    container_name: coze-nsqd
+    container_name: office-assistant-nsqd
     command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 --broadcast-address=nsqd
     restart: always
     # ports:
@@ -371,7 +373,7 @@ services:
 
   nsqadmin:
     image: nsqio/nsq:v1.2.1
-    container_name: coze-nsqadmin
+    container_name: office-assistant-nsqadmin
     command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
     restart: always
     # ports:
@@ -383,12 +385,12 @@ services:
       - coze-network
 
   coze-server:
-    # build:
-    #   context: ../
-    #   dockerfile: backend/Dockerfile
-    image: cozedev/coze-studio-server:latest
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
+    image: office-assistant-factory-server:local
     restart: always
-    container_name: coze-server
+    container_name: office-assistant-server
     env_file: *env_file
     # environment:
     #   LISTEN_ADDR: 0.0.0.0:8888
@@ -410,16 +412,16 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      milvus:
-        condition: service_healthy
     command: ['/app/opencoze']
 
   coze-web:
-    # build:
-    #   context: ..
-    #   dockerfile: frontend/Dockerfile
-    image: cozedev/coze-studio-web:latest
-    container_name: coze-web
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        OFFICE_FACTORY_MINIMAL: ${OFFICE_FACTORY_MINIMAL:-true}
+    image: office-assistant-factory-web:local
+    container_name: office-assistant-web
     restart: always
     ports:
       - "${WEB_LISTEN_ADDR:-8888}:80"
