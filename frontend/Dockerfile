@@ -19,13 +19,22 @@ RUN npm config set registry https://registry.npmmirror.com
 COPY rush.json ./
 
 # Install rush with retry logic
-RUN npm install -g @microsoft/rush --registry=https://registry.npmjs.org
+RUN for i in 1 2 3; do \
+      npm install -g @microsoft/rush --registry=https://registry.npmmirror.com && break; \
+      if [ "$i" = "3" ]; then exit 1; fi; \
+      echo "rush install failed, retrying in 10s..."; \
+      sleep 10; \
+    done
 
 # Copy the frontend source code (excluding node_modules and build artifacts)
 COPY frontend/ ./frontend/
 
 # Copy common directory for Rush
 COPY common/ ./common/
+
+# Use a mirror for Rush / pnpm installs in Docker builds.
+RUN find common/config/subspaces -name .npmrc -type f \
+      -exec sed -i 's#registry=https://registry.npmjs.org#registry=https://registry.npmmirror.com#g' {} \;
 
 # Copy scripts directory for Rush hooks
 COPY scripts/ ./scripts/
@@ -34,7 +43,13 @@ COPY scripts/ ./scripts/
 RUN find . -name "*.sh" -type f -exec dos2unix {} \;
 
 # Install all dependencies
-RUN chmod +x scripts/hooks/post-rush-install.sh && rm -rf /app/common/temp && rush install
+RUN chmod +x scripts/hooks/post-rush-install.sh && rm -rf /app/common/temp && \
+    for i in 1 2 3; do \
+      rush install && break; \
+      if [ "$i" = "3" ]; then exit 1; fi; \
+      echo "rush install failed, retrying in 10s..."; \
+      sleep 10; \
+    done
 
 # Use rush build to build the specific project
 RUN rush build --to @coze-studio/app

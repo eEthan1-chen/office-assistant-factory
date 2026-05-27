@@ -3,12 +3,22 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
+ENV GOPROXY=https://goproxy.cn,direct
+
+# if you located in China, you can use aliyun mirror to speed up
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # Install build dependencies for Go
 RUN apk add --no-cache git gcc libc-dev
 
 # Copy go.mod and go.sum first to leverage Docker cache
 COPY backend/go.mod backend/go.sum ./
-RUN go mod download
+RUN for i in 1 2 3; do \
+      go mod download && break; \
+      if [ "$i" = "3" ]; then exit 1; fi; \
+      echo "go mod download failed, retrying in 10s..."; \
+      sleep 10; \
+    done
 
 # Copy the entire backend source code
 COPY backend/ ./
@@ -18,19 +28,32 @@ RUN go build -ldflags="-s -w" -o /app/opencoze main.go
 
 
 # Stage 2: Final image
-FROM alpine:3.22.0
+FROM alpine:3.22
 
 WORKDIR /app
 
+# if you located in China, you can use aliyun mirror to speed up
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # Install runtime dependencies for Go app and base for Python
-# pax-utils for scanelf, python3 for running Python, python3-dev for headers/shared libs
+# pax-utils for scanelf, python3 for running Python
 # bind-tools for nslookup etc., file for debugging file types
-RUN apk add --no-cache pax-utils python3 python3-dev bind-tools file deno curl
+RUN for i in 1 2 3; do \
+      apk add --no-cache pax-utils python3 bind-tools file deno curl && break; \
+      if [ "$i" = "3" ]; then exit 1; fi; \
+      echo "apk add runtime dependencies failed, retrying in 10s..."; \
+      sleep 10; \
+    done
 
 RUN deno run -A jsr:@langchain/pyodide-sandbox -c "print('Hello, World')"
 
 # Install Python build dependencies, create venv, install packages, then remove build deps
-RUN apk add --no-cache --virtual .python-build-deps build-base py3-pip git && \
+RUN for i in 1 2 3; do \
+      apk add --no-cache --virtual .python-build-deps build-base py3-pip git && break; \
+      if [ "$i" = "3" ]; then exit 1; fi; \
+      echo "apk add python build dependencies failed, retrying in 10s..."; \
+      sleep 10; \
+    done && \
     python3 -m venv --copies --upgrade-deps /app/.venv && \
     # Activate venv and install packages
     . /app/.venv/bin/activate && \
