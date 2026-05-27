@@ -49,6 +49,8 @@ make down_web
 
 完整教程见 [docs/INSTALL_RUN.md](docs/INSTALL_RUN.md)，其中包含本地 Docker 部署、源码开发配置、环境变量说明、可选向量库开启方式和常见问题排查。
 
+如果需要从零复现“拉取仓库、关闭旧服务、构建启动、页面验证、注册接口冒烟测试”的完整流程，请看 [docs/CLONE_DEPLOY_VERIFY.md](docs/CLONE_DEPLOY_VERIFY.md)。
+
 ## 项目结构
 
 ```text

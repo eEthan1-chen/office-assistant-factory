@@ -49,6 +49,8 @@ make down_web
 
 See [docs/INSTALL_RUN.md](docs/INSTALL_RUN.md) for the full local Docker deployment, source development workflow, environment variables, and troubleshooting notes.
 
+For the Chinese step-by-step clone, deploy, and verification record, see [docs/CLONE_DEPLOY_VERIFY.md](docs/CLONE_DEPLOY_VERIFY.md).
+
 ## Core Structure
 
 ```text
