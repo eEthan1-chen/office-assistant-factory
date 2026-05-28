@@ -59,7 +59,11 @@ import {
   SearchScope,
 } from '@coze-arch/idl/intelligence_api';
 import { I18n, type I18nKeysNoOptionsType } from '@coze-arch/i18n';
-import { IconCozLoading, IconCozPlus } from '@coze-arch/coze-design/icons';
+import {
+  IconCozBot,
+  IconCozLoading,
+  IconCozPlus,
+} from '@coze-arch/coze-design/icons';
 import {
   Button,
   IconButton,
@@ -152,6 +156,14 @@ export const Develop: FC<DevelopProps> = ({ spaceId }) => {
             <span>{I18n.t('workspace_develop')}</span>
           </HeaderTitle>
           <HeaderActions>
+            <Button
+              icon={<IconCozBot />}
+              onClick={() => {
+                window.location.href = `/space/${spaceId}/agent-builder`;
+              }}
+            >
+              自然语言创建智能体
+            </Button>
             <Button icon={<IconCozPlus />} onClick={actions.createIntelligence}>
               {I18n.t('workspace_create')}
             </Button>
@@ -357,8 +369,8 @@ export const Develop: FC<DevelopProps> = ({ spaceId }) => {
                       filterParams.recentlyOpen
                         ? 'recentOpen'
                         : filterParams.isPublish
-                        ? 'publish'
-                        : 'edit'
+                          ? 'publish'
+                          : 'edit'
                     }
                   />
                 ))}

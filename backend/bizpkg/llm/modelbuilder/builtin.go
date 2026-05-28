@@ -30,7 +30,8 @@ import (
 var ctxCacheKey = "builtin_chat_model_in_context"
 
 func GetBuiltinChatModel(ctx context.Context, envPrefix string) (bcm BaseChatModel, configured bool, err error) {
-	bcm, ok := ctxcache.Get[BaseChatModel](ctx, ctxCacheKey)
+	cacheKey := builtinChatModelCacheKey(envPrefix)
+	bcm, ok := ctxcache.Get[BaseChatModel](ctx, cacheKey)
 	if ok {
 		logs.CtxDebugf(ctx, "builtin chat model in context: %v", bcm)
 		return bcm, true, nil
@@ -41,11 +42,11 @@ func GetBuiltinChatModel(ctx context.Context, envPrefix string) (bcm BaseChatMod
 		return nil, false, fmt.Errorf("get knowledge config failed: %w", err)
 	}
 
-	model, err := config.ModelConf().GetBuiltinChatModelConfig(ctx, knowledgeConf.BuiltinModelID)
+	model, err := config.ModelConf().GetBuiltinChatModelConfig(ctx, knowledgeConf.BuiltinModelID, envPrefix)
 	if err == nil {
 		bcm, err = BuildModelWithConf(ctx, model)
 		if err == nil {
-			ctxcache.Store(ctx, ctxCacheKey, bcm)
+			ctxcache.Store(ctx, cacheKey, bcm)
 			return bcm, true, nil
 		}
 	} else {
@@ -67,13 +68,21 @@ func GetBuiltinChatModel(ctx context.Context, envPrefix string) (bcm BaseChatMod
 		if err = checkModelConfig(ctx, bcm); err == nil {
 			logs.CtxDebugf(ctx, "build model %v %v success, in model list", m.Provider.Name, m.Provider.ModelClass.String())
 
-			ctxcache.Store(ctx, ctxCacheKey, bcm)
+			ctxcache.Store(ctx, cacheKey, bcm)
 			return bcm, true, nil
 		}
 
 	}
 
 	return nil, false, nil
+}
+
+func builtinChatModelCacheKey(envPrefix string) string {
+	if envPrefix == "" {
+		return ctxCacheKey
+	}
+
+	return fmt.Sprintf("%s:%s", ctxCacheKey, envPrefix)
 }
 
 func checkModelConfig(ctx context.Context, bcm BaseChatModel) (err error) {

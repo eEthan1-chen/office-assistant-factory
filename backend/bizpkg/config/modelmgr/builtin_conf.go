@@ -26,12 +26,20 @@ import (
 	"github.com/coze-dev/coze-studio/backend/pkg/envkey"
 )
 
-func (c *ModelConfig) GetBuiltinChatModelConfig(ctx context.Context, builtinModelID int64) (*Model, error) {
+func (c *ModelConfig) GetBuiltinChatModelConfig(ctx context.Context, builtinModelID int64, envPrefixes ...string) (*Model, error) {
+	envPrefix := normalizeBuiltinEnvPrefix(envPrefixes...)
+	if envPrefix != "" {
+		prefixedModel := getOldKnowledgeBuiltinChatModelConfig(envPrefix)
+		if prefixedModel != nil {
+			return prefixedModel, nil
+		}
+	}
+
 	if builtinModelID > 0 {
 		return c.GetModelByID(ctx, builtinModelID)
 	}
 
-	oldKnowledgeModel := getOldKnowledgeBuiltinChatModelConfig()
+	oldKnowledgeModel := getOldKnowledgeBuiltinChatModelConfig("")
 	if oldKnowledgeModel == nil {
 		return nil, fmt.Errorf("old knowledge model conf is nil")
 	}
@@ -39,22 +47,22 @@ func (c *ModelConfig) GetBuiltinChatModelConfig(ctx context.Context, builtinMode
 	return oldKnowledgeModel, nil
 }
 
-func getOldKnowledgeBuiltinChatModelConfig() *Model {
-	modelClass := getKnowledgeBuiltinModelClass()
+func getOldKnowledgeBuiltinChatModelConfig(envPrefix string) *Model {
+	modelClass := getKnowledgeBuiltinModelClass(envPrefix)
 	provider, ok := GetModelProvider(modelClass)
 	if !ok {
 		return nil
 	}
 
-	typeStr := strings.ToUpper(os.Getenv("BUILTIN_CM_TYPE"))
+	typeStr := strings.ToUpper(os.Getenv(envPrefix + "BUILTIN_CM_TYPE"))
 
 	if typeStr == "" {
 		return nil
 	}
 
-	baseURLKey := fmt.Sprintf("BUILTIN_CM_%s_BASE_URL", typeStr)
-	apiKeyKey := fmt.Sprintf("BUILTIN_CM_%s_API_KEY", typeStr)
-	modelKey := fmt.Sprintf("BUILTIN_CM_%s_MODEL", typeStr)
+	baseURLKey := fmt.Sprintf("%sBUILTIN_CM_%s_BASE_URL", envPrefix, typeStr)
+	apiKeyKey := fmt.Sprintf("%sBUILTIN_CM_%s_API_KEY", envPrefix, typeStr)
+	modelKey := fmt.Sprintf("%sBUILTIN_CM_%s_MODEL", envPrefix, typeStr)
 
 	return &Model{
 		Model: &config.Model{
@@ -66,20 +74,20 @@ func getOldKnowledgeBuiltinChatModelConfig() *Model {
 					APIKey:  envkey.GetString(apiKeyKey),
 				},
 				Gemini: &config.GeminiConnInfo{
-					Backend:  envkey.GetI32D("BUILTIN_CM_GEMINI_BACKEND", 1),
-					Project:  envkey.GetString("BUILTIN_CM_GEMINI_PROJECT"),
-					Location: envkey.GetString("BUILTIN_CM_GEMINI_LOCATION"),
+					Backend:  envkey.GetI32D(envPrefix+"BUILTIN_CM_GEMINI_BACKEND", 1),
+					Project:  envkey.GetString(envPrefix + "BUILTIN_CM_GEMINI_PROJECT"),
+					Location: envkey.GetString(envPrefix + "BUILTIN_CM_GEMINI_LOCATION"),
 				},
 				Openai: &config.OpenAIConnInfo{
-					ByAzure: envkey.GetBoolD("BUILTIN_CM_OPENAI_BY_AZURE", false),
+					ByAzure: envkey.GetBoolD(envPrefix+"BUILTIN_CM_OPENAI_BY_AZURE", false),
 				},
 			},
 		},
 	}
 }
 
-func getKnowledgeBuiltinModelClass() developer_api.ModelClass {
-	builtinChatModelTypeStr := os.Getenv("BUILTIN_CM_TYPE")
+func getKnowledgeBuiltinModelClass(envPrefix string) developer_api.ModelClass {
+	builtinChatModelTypeStr := os.Getenv(envPrefix + "BUILTIN_CM_TYPE")
 	switch builtinChatModelTypeStr {
 	case "openai":
 		return developer_api.ModelClass_GPT
@@ -96,4 +104,21 @@ func getKnowledgeBuiltinModelClass() developer_api.ModelClass {
 	default:
 		return developer_api.ModelClass_SEED
 	}
+}
+
+func normalizeBuiltinEnvPrefix(envPrefixes ...string) string {
+	if len(envPrefixes) == 0 {
+		return ""
+	}
+
+	envPrefix := strings.TrimSpace(envPrefixes[0])
+	if envPrefix == "" {
+		return ""
+	}
+
+	if !strings.HasSuffix(envPrefix, "_") {
+		envPrefix += "_"
+	}
+
+	return envPrefix
 }

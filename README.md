@@ -2,7 +2,7 @@
 
 Office Assistant Factory is a source-based local development repository for building an enterprise office assistant on top of the open-source Coze Studio codebase.
 
-This repository keeps the full upstream source tree for backend, frontend, common packages, Docker deployment, Rush workspace configuration, and build scripts. The first competition-oriented layer adds Office Assistant Factory branding, an enterprise OpenAI-compatible model gateway profile, minimal office mode, and starter office scenarios for meeting room booking, task follow-up, and project weekly reports.
+This repository keeps the full upstream source tree for backend, frontend, common packages, Docker deployment, Rush workspace configuration, and build scripts. The first competition-oriented layer adds Office Assistant Factory branding, an enterprise OpenAI-compatible model gateway profile, minimal office mode, natural-language agent creation, and starter office scenarios for meeting room booking, task follow-up, and project weekly reports.
 
 ## Source Base
 
@@ -19,6 +19,8 @@ Internal package names such as `@coze-studio/*` and paths such as `frontend/apps
 - Local Docker profile: `docker/.env.example.office`
 - Minimal office mode: `OFFICE_FACTORY_MINIMAL=true`
 - Default model profile: OpenAI-compatible enterprise gateway
+- Natural-language agent builder: create Coze single-agent drafts from office requirements
+- Dedicated Qwen model profile for natural-language agent design
 - Office scenarios: `backend/conf/agentbuilder/xiamenair_skills.yaml`
 - Optional heavy modules are kept in source and hidden or disabled by configuration where possible.
 
@@ -30,6 +32,7 @@ cd office-assistant-factory
 
 cp docker/.env.example.office docker/.env
 # Edit MODEL_BASE_URL_0, MODEL_API_KEY_0, and MODEL_ID_0 in docker/.env.
+# Edit NL2AGENT_BUILTIN_CM_QWEN_API_KEY for natural-language agent creation.
 
 make web
 ```
@@ -49,6 +52,8 @@ make down_web
 
 See [docs/INSTALL_RUN.md](docs/INSTALL_RUN.md) for the full local Docker deployment, source development workflow, environment variables, and troubleshooting notes.
 
+See [docs/AGENT_BUILDER_QWEN.md](docs/AGENT_BUILDER_QWEN.md) for the natural-language agent builder workflow, Qwen configuration, API details, and verification checklist.
+
 For the Chinese step-by-step clone, deploy, and verification record, see [docs/CLONE_DEPLOY_VERIFY.md](docs/CLONE_DEPLOY_VERIFY.md).
 
 ## Core Structure
@@ -63,6 +68,19 @@ backend/conf/agentbuilder/        Office scenario templates
 Makefile                          Local build and run entrypoints
 rush.json                         Frontend monorepo definition
 ```
+
+## Natural-Language Agent Builder
+
+The workspace development page includes a `自然语言创建智能体` entry. Users can describe an office need, preview the generated `AgentSpec`, confirm existing resource mappings, and create a Coze single-agent draft that opens in Agent IDE.
+
+The MVP keeps a narrow boundary:
+
+- It creates only single-agent drafts.
+- It maps only existing plugins, workflows, and knowledge bases.
+- It does not create new resources automatically.
+- It does not persist `AgentSpec`; it is only an API payload and preview object.
+
+The generation model is isolated from the global Agent/Workflow model by the `NL2AGENT_BUILTIN_CM_*` environment variables. The default template uses Aliyun Bailian Qwen via the OpenAI-compatible Chat Completions endpoint.
 
 ## Minimal Office Mode
 
