@@ -31,6 +31,14 @@ export { PluginDevelopApi } from './plugin-develop';
 
 export { cardApi } from './card-api';
 export { appBuilderApi } from './app-builder-api';
+export { agentBuilderApi } from './agent-builder-api';
+export type {
+  AgentSpec,
+  AgentBuilderResourceBinding,
+  AgentBuilderResourceBindings,
+  AgentBuilderResourceCandidate,
+  AgentBuilderResourcePlan,
+} from './agent-builder-api';
 export { uiBuilderApi } from './ui-builder-api';
 
 export { obDataApi } from './ob-data-api';

@@ -49,6 +49,17 @@ BUILTIN_CM_OPENAI_API_KEY=replace-with-enterprise-gateway-key
 BUILTIN_CM_OPENAI_MODEL=office-assistant
 ```
 
+自然语言创建智能体功能默认单独使用阿里云百炼 Qwen，不影响上面的普通 Agent 和 Workflow 模型：
+
+```bash
+NL2AGENT_BUILTIN_CM_TYPE=qwen
+NL2AGENT_BUILTIN_CM_QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+NL2AGENT_BUILTIN_CM_QWEN_MODEL=qwen-plus
+NL2AGENT_BUILTIN_CM_QWEN_API_KEY=replace-with-dashscope-api-key
+```
+
+真实 API Key 只写入本地 `docker/.env` 或部署平台密钥，不要提交到 Git。团队协作时由项目负责人通过安全渠道单独分发密钥。
+
 默认最小办公模式：
 
 ```bash
@@ -94,8 +105,10 @@ http://localhost:8888/sign
 
 1. 在登录页注册账号。
 2. 进入首页。
-3. 打开管理后台模型页：`http://localhost:8888/admin/#model-management`。
-4. 确认企业模型网关配置存在，或按比赛环境补充模型配置。
+3. 进入工作空间开发页，点击 `自然语言创建智能体`。
+4. 输入办公需求并生成预览，例如：`帮我每天汇总会议、待办和项目风险，提醒我优先处理冲突事项`。
+5. 确认资源映射后创建草稿，系统会跳转到 Agent IDE。
+6. 如需检查普通模型配置，打开管理后台模型页：`http://localhost:8888/admin/#model-management`。
 
 ## 6. 停止和清理
 
@@ -205,6 +218,14 @@ WEB_LISTEN_ADDR=127.0.0.1:8890
 - 检查 `MODEL_BASE_URL_0` 是否包含 `/v1`。
 - 检查企业网关是否兼容 OpenAI Chat Completions 接口。
 - 检查 `MODEL_API_KEY_0` 是否有效。
+
+自然语言创建智能体生成失败：
+
+- 检查 `NL2AGENT_BUILTIN_CM_TYPE=qwen`。
+- 检查 `NL2AGENT_BUILTIN_CM_QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1`。
+- 检查 `NL2AGENT_BUILTIN_CM_QWEN_MODEL=qwen-plus`。
+- 检查 `NL2AGENT_BUILTIN_CM_QWEN_API_KEY` 是否有效、额度是否可用。
+- 可先用 `docs/AGENT_BUILDER_QWEN.md` 中的 Qwen smoke test 验证模型连通性。
 
 Docker 构建很慢：
 

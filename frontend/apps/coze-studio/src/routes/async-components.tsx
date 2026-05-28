@@ -50,6 +50,9 @@ export const SpaceIdLayout = lazy(() =>
 // project development page
 export const Develop = lazy(() => import('../pages/develop'));
 
+// natural language agent builder page
+export const AgentBuilder = lazy(() => import('../pages/agent-builder'));
+
 // resource library page
 export const Library = lazy(() => import('../pages/library'));
 

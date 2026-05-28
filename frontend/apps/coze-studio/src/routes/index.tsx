@@ -26,6 +26,7 @@ import {
   SpaceLayout,
   SpaceIdLayout,
   Develop,
+  AgentBuilder,
   AgentIDELayout,
   AgentIDE,
   AgentPublishPage,
@@ -133,6 +134,14 @@ export const router: ReturnType<typeof createBrowserRouter> =
                 {
                   path: 'develop',
                   Component: Develop,
+                  loader: () => ({
+                    subMenuKey: SpaceSubModuleEnum.DEVELOP,
+                  }),
+                },
+
+                {
+                  path: 'agent-builder',
+                  Component: AgentBuilder,
                   loader: () => ({
                     subMenuKey: SpaceSubModuleEnum.DEVELOP,
                   }),

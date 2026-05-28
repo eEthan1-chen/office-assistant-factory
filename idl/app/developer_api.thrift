@@ -913,6 +913,114 @@ struct PluginOauthConfirmResp {
     2: string msg
 }
 
+struct AgentBuilderOnboardingSpec {
+    1: string       prologue
+    2: list<string> suggested_questions
+}
+
+struct AgentBuilderResourceRequirements {
+    1: list<string> plugin_keywords
+    2: list<string> workflow_keywords
+    3: list<string> knowledge_keywords
+    4: list<string> missing_capabilities
+    5: list<string> risk_control_keywords
+}
+
+struct AgentBuilderVariableSpec {
+    1: string key
+    2: string description
+    3: string default_value
+}
+
+struct AgentSpec {
+    1: string                            name
+    2: string                            description
+    3: string                            goal
+    4: string                            prompt
+    5: AgentBuilderOnboardingSpec        onboarding
+    6: AgentBuilderResourceRequirements  resource_requirements
+    7: list<AgentBuilderVariableSpec>    variables
+}
+
+struct AgentBuilderResourceCandidate {
+    1:  string resource_type
+    2:  string resource_id
+    3:  string plugin_id
+    4:  string api_id
+    5:  string name
+    6:  string description
+    7:  double score
+    8:  string confidence
+    9:  bool   selected
+    10: string reason
+}
+
+struct AgentBuilderMissingResourceSuggestion {
+    1: string resource_type
+    2: string name
+    3: string description
+    4: string reason
+    5: string risk_level
+}
+
+struct AgentBuilderResourcePlan {
+    1: list<AgentBuilderResourceCandidate>         plugins
+    2: list<AgentBuilderResourceCandidate>         workflows
+    3: list<AgentBuilderResourceCandidate>         knowledge
+    4: list<AgentBuilderMissingResourceSuggestion> missing_suggestions
+    5: list<string>                                warnings
+}
+
+struct GenerateAgentSpecRequest {
+    1: required i64    space_id (agw.js_conv="str", api.js_conv="true")
+    2: required string requirement
+    3: optional string scene_hint
+}
+
+struct GenerateAgentSpecData {
+    1: AgentSpec                agent_spec
+    2: AgentBuilderResourcePlan resource_plan
+}
+
+struct GenerateAgentSpecResponse {
+    1: i64                   code
+    2: string                msg
+    3: GenerateAgentSpecData data
+}
+
+struct AgentBuilderResourceBinding {
+    1: string resource_type
+    2: string resource_id
+    3: string plugin_id
+    4: string api_id
+    5: string name
+    6: string description
+}
+
+struct AgentBuilderResourceBindings {
+    1: list<AgentBuilderResourceBinding> plugins
+    2: list<AgentBuilderResourceBinding> workflows
+    3: list<AgentBuilderResourceBinding> knowledge
+}
+
+struct CreateAgentDraftRequest {
+    1: required i64                           space_id (agw.js_conv="str", api.js_conv="true")
+    2: required AgentSpec                     agent_spec
+    3: optional AgentBuilderResourceBindings  resource_bindings
+}
+
+struct CreateAgentDraftData {
+    1: i64          bot_id (agw.js_conv="str", api.js_conv="true")
+    2: string       ide_url
+    3: list<string> warnings
+}
+
+struct CreateAgentDraftResponse {
+    1: i64                  code
+    2: string               msg
+    3: CreateAgentDraftData data
+}
+
 service DeveloperApiService {
     PluginOauthAuthorizationCodeResp PluginOauthAuthorizationCode(1: PluginOauthAuthorizationCodeReq request)(api.get='/api/plugin_oauth/:plugin_id/authorization_code', api.category="oauth", api.gen_path="oauth")
     PluginOauthInfoResp PluginOauthInfo(1: PluginOauthInfoReq request)(api.get='/api/plugin/oauth/get_oauth_info', api.category="oauth", api.gen_path="oauth")
@@ -927,6 +1035,8 @@ service DeveloperApiService {
     PublishConnectorListResponse PublishConnectorList(1:PublishConnectorListRequest request)(api.post='/api/draftbot/publish/connector/list', api.category="draftbot", api.gen_path="draftbot")
 
     DraftBotCreateResponse DraftBotCreate(1:DraftBotCreateRequest request)(api.post='/api/draftbot/create', api.category="draftbot", api.gen_path="draftbot")
+    GenerateAgentSpecResponse GenerateAgentSpec(1:GenerateAgentSpecRequest request)(api.post='/api/agent_builder/generate_spec', api.category="agent_builder", api.gen_path="agent_builder")
+    CreateAgentDraftResponse CreateAgentDraft(1:CreateAgentDraftRequest request)(api.post='/api/agent_builder/create_draft', api.category="agent_builder", api.gen_path="agent_builder")
     UpdateDraftBotDisplayInfoResponse UpdateDraftBotDisplayInfo(1:UpdateDraftBotDisplayInfoRequest request)(api.post='/api/draftbot/update_display_info', api.category="draftbot", api.gen_path="draftbot")
     GetDraftBotDisplayInfoResponse GetDraftBotDisplayInfo(1:GetDraftBotDisplayInfoRequest request)(api.post='/api/draftbot/get_display_info', api.category="draftbot", api.gen_path="draftbot")
     PublishDraftBotResponse PublishDraftBot(1:PublishDraftBotRequest request)(api.post='/api/draftbot/publish', api.category="draftbot", api.gen_path="draftbot")
