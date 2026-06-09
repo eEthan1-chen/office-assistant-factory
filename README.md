@@ -1,93 +1,520 @@
-# office-assistant-factory
+# Office Assistant Factory 项目说明与部署指南
 
+Office Assistant Factory 是基于开源 Coze Studio 二次开发的企业办公智能体工厂。项目保留 Coze Studio 的完整后端、前端、Rush Monorepo、Docker 部署和构建体系，在此基础上增加面向办公场景的轻量化入口、厦航办公场景模板，以及“自然语言创建智能体”能力。
 
+当前版本支持用户在工作空间开发页输入自然语言办公需求，由后端调用阿里云百炼 Qwen 生成结构化 `AgentSpec`，自动规划当前空间已有插件、工作流、知识库等资源，用户确认后创建 Coze 单智能体草稿，并跳转到 Agent IDE 继续编辑。
 
-## Getting started
+## 1. 项目信息
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- 上游基础：`coze-dev/coze-studio@22275b1c2661d35344a7493cffe401e8cc61cf8e`
+- 当前仓库：`https://github.com/eEthan1-chen/office-assistant-factory`
+- 主要分支：`main`
+- 快照分支：`snapshot-2026-05-26`
+- 许可证：Apache 2.0，继承自 Coze Studio
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+为了保持上游构建链路稳定，项目内部包名和路径仍保留 Coze Studio 原命名，例如：
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+```text
+frontend/apps/coze-studio
+frontend/packages/*
+@coze-studio/*
+@coze-arch/*
 ```
-cd existing_repo
-git remote add origin http://git.xiamenair.com.cn/ai4it/office-assistant-factory.git
-git branch -M main
-git push -uf origin main
+
+## 2. 当前定制能力
+
+- Office Assistant Factory 项目品牌和本地 Docker 配置。
+- `OFFICE_FACTORY_MINIMAL=true` 最小办公模式。
+- 企业 OpenAI 兼容模型网关配置模板。
+- 自然语言创建智能体页面和后端 API。
+- 独立的 `NL2AGENT_BUILTIN_CM_*` Qwen 模型配置，不影响普通 Agent 和 Workflow 模型。
+- 厦航办公场景提示词模板：`backend/conf/agentbuilder/xiamenair_skills.yaml`。
+- 资源规划器只映射当前空间已有插件、工作流、知识库，不自动创建资源。
+
+## 3. 核心目录
+
+```text
+backend/                         Go 后端源码
+backend/application/agentbuilder/ 自然语言创建智能体应用层
+backend/conf/agentbuilder/        办公场景模板
+frontend/apps/coze-studio/        React 应用入口
+frontend/packages/                前端 Rush Monorepo 包
+common/                           Rush 公共配置
+docker/                           本地 Docker 部署
+docs/                             辅助文档
+Makefile                          常用构建和启动入口
+rush.json                         前端 Monorepo 定义
 ```
 
-## Integrate with your tools
+## 4. 自然语言创建智能体
 
-- [ ] [Set up project integrations](http://git.xiamenair.com.cn/ai4it/office-assistant-factory/-/settings/integrations)
+入口位于工作空间开发页：
 
-## Collaborate with your team
+```text
+/space/{space_id}/develop
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+点击 `自然语言创建智能体` 后进入：
 
-## Test and Deploy
+```text
+/space/{space_id}/agent-builder
+```
 
-Use the built-in continuous integration in GitLab.
+页面能力：
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- 输入办公需求。
+- 调用 Qwen 生成 `AgentSpec`。
+- 展示智能体名称、描述、目标、Prompt、开场白、建议问题和变量。
+- 展示插件、工作流、知识库候选资源。
+- 展示缺失资源建议和风险提示。
+- 用户确认资源绑定后创建 Coze 单智能体草稿。
+- 创建成功后跳转 Agent IDE：
 
-***
+```text
+/space/{space_id}/bot/{bot_id}
+```
 
-# Editing this README
+MVP 边界：
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- 只创建单智能体草稿。
+- 不新增数据库表。
+- 不持久化 `AgentSpec`。
+- 不自动创建插件、工作流、知识库。
+- 只映射当前空间已有资源。
 
-## Suggestions for a good README
+## 5. API 说明
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+生成智能体预览：
 
-## Name
-Choose a self-explaining name for your project.
+```http
+POST /api/agent_builder/generate_spec
+Content-Type: application/json
+Cookie: session_key=<登录态>
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+{
+  "space_id": "7644856009260793856",
+  "requirement": "帮我每天汇总会议、待办和项目风险，提醒我优先处理冲突事项"
+}
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+创建草稿：
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```http
+POST /api/agent_builder/create_draft
+Content-Type: application/json
+Cookie: session_key=<登录态>
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+{
+  "space_id": "7644856009260793856",
+  "agent_spec": {
+    "name": "每日办公摘要助手",
+    "description": "...",
+    "goal": "...",
+    "prompt": "...",
+    "onboarding": {
+      "prologue": "...",
+      "suggested_questions": []
+    },
+    "resource_requirements": {},
+    "variables": []
+  },
+  "resource_bindings": {
+    "plugins": [],
+    "workflows": [],
+    "knowledge": []
+  }
+}
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+注意：`space_id`、`bot_id` 等大整数在 JSON 中按字符串传递，避免前端精度丢失。
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## 6. 环境要求
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+本地 Docker 部署：
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+- macOS、Linux 或 Windows + WSL2
+- Docker Desktop 或 Docker Engine
+- Docker Compose v2
+- 至少 2 Core CPU、4 GB 内存，建议 8 GB 以上
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+源码开发额外需要：
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+- Go 1.24
+- Node.js 22
+- Rush 5.x
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+检查环境：
 
-## License
-For open source projects, say how it is licensed.
+```bash
+docker --version
+docker compose version
+go version
+node -v
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 7. 快速启动
+
+克隆仓库：
+
+```bash
+git clone https://github.com/eEthan1-chen/office-assistant-factory.git
+cd office-assistant-factory
+```
+
+复制环境变量模板：
+
+```bash
+cp docker/.env.example.office docker/.env
+```
+
+编辑 `docker/.env`，至少配置普通模型和自然语言创建智能体模型。
+
+普通 Agent 和 Workflow 模型配置示例：
+
+```bash
+export MODEL_PROTOCOL_0="openai"
+export MODEL_OPENCOZE_ID_0="100001"
+export MODEL_NAME_0="企业大模型网关"
+export MODEL_ID_0="office-assistant"
+export MODEL_API_KEY_0="replace-with-enterprise-gateway-key"
+export MODEL_BASE_URL_0="http://enterprise-llm-gateway.local/v1"
+
+export BUILTIN_CM_TYPE="openai"
+export BUILTIN_CM_OPENAI_BASE_URL="http://enterprise-llm-gateway.local/v1"
+export BUILTIN_CM_OPENAI_API_KEY="replace-with-enterprise-gateway-key"
+export BUILTIN_CM_OPENAI_MODEL="office-assistant"
+```
+
+自然语言创建智能体 Qwen 配置示例：
+
+```bash
+export NL2AGENT_BUILTIN_CM_TYPE="qwen"
+export NL2AGENT_BUILTIN_CM_QWEN_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+export NL2AGENT_BUILTIN_CM_QWEN_MODEL="qwen-plus"
+export NL2AGENT_BUILTIN_CM_QWEN_API_KEY="replace-with-dashscope-api-key"
+```
+
+重要：真实 API Key 只写入本地 `docker/.env`、服务器环境变量或 GitHub Secrets，不要提交到 Git。团队成员需要密钥时，请通过公司安全渠道单独分发。
+
+启动：
+
+```bash
+make web
+```
+
+访问：
+
+```text
+http://localhost:8888/sign
+```
+
+停止：
+
+```bash
+make down_web
+```
+
+## 8. 本地操作流程
+
+1. 打开 `http://localhost:8888/sign`。
+2. 注册或登录账号。
+3. 进入个人工作空间。
+4. 打开开发页。
+5. 点击 `自然语言创建智能体`。
+6. 输入示例需求：
+
+```text
+帮我每天汇总会议、待办和项目风险，提醒我优先处理冲突事项
+```
+
+7. 点击生成，查看 `AgentSpec` 和资源映射预览。
+8. 勾选需要绑定的已有资源。
+9. 点击确认创建。
+10. 系统跳转 Agent IDE，继续编辑或调试智能体。
+
+## 9. Qwen 连通性验证
+
+加载本地环境变量：
+
+```bash
+set -a
+source docker/.env
+set +a
+```
+
+调用阿里云 OpenAI 兼容接口：
+
+```bash
+curl --location "${NL2AGENT_BUILTIN_CM_QWEN_BASE_URL}/chat/completions" \
+  --header "Authorization: Bearer ${NL2AGENT_BUILTIN_CM_QWEN_API_KEY}" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "model": "qwen-plus",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "用中文只回答：ok"}
+    ],
+    "temperature": 0.1,
+    "max_tokens": 16
+  }'
+```
+
+预期结果：
+
+- HTTP 状态码为 `200`。
+- 响应中包含 `choices[0].message.content`。
+- `model` 字段为 `qwen-plus` 或对应模型快照。
+
+阿里云官方文档：
+
+```text
+https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions
+```
+
+## 10. 构建与测试
+
+后端测试：
+
+```bash
+cd backend
+go test ./bizpkg/config/modelmgr ./bizpkg/llm/modelbuilder ./application/agentbuilder
+go test -run '^$' ./api/handler/coze ./api/router
+cd ..
+```
+
+后端构建：
+
+```bash
+bash scripts/setup/server.sh
+```
+
+前端依赖安装：
+
+```bash
+npm install -g @microsoft/rush
+rush update
+```
+
+前端构建并同步静态资源：
+
+```bash
+make fe
+```
+
+完整 Docker 构建启动：
+
+```bash
+make web
+```
+
+Smoke test：
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8888/sign
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8888/space/1/agent-builder
+```
+
+预期都返回：
+
+```text
+200
+```
+
+## 11. 源码开发模式
+
+启动中间件：
+
+```bash
+make middleware
+```
+
+启动后端：
+
+```bash
+make server
+```
+
+启动前端开发服务：
+
+```bash
+cd frontend/apps/coze-studio
+npm run dev
+```
+
+常用命令：
+
+```bash
+make fe
+make build_server
+rush build
+cd backend && go test ./...
+```
+
+## 12. 最小办公模式
+
+默认环境变量：
+
+```bash
+export OFFICE_FACTORY_MINIMAL=true
+export VECTOR_STORE_TYPE="disabled"
+export OCR_TYPE="disabled"
+```
+
+效果：
+
+- 隐藏资源库、探索商店等非办公演示必要入口。
+- 不删除源码，后续可以恢复。
+- 默认关闭向量库和 OCR 重依赖，降低本地部署成本。
+
+如需恢复更多入口，可将：
+
+```bash
+OFFICE_FACTORY_MINIMAL=false
+```
+
+然后重新构建前端镜像。
+
+## 13. 可选开启向量库
+
+默认关闭：
+
+```bash
+VECTOR_STORE_TYPE=disabled
+```
+
+如需知识库向量能力，可在 `docker/.env` 中配置：
+
+```bash
+VECTOR_STORE_TYPE=milvus
+EMBEDDING_TYPE=openai
+OPENAI_EMBEDDING_BASE_URL=<your-embedding-base-url>
+OPENAI_EMBEDDING_MODEL=<your-embedding-model>
+OPENAI_EMBEDDING_API_KEY=<your-embedding-api-key>
+```
+
+启动 vector profile：
+
+```bash
+docker compose -f docker/docker-compose.yml --env-file docker/.env --profile vector up -d --build
+```
+
+## 14. 团队协作流程
+
+推荐流程：
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feat/your-feature
+```
+
+提交前至少运行：
+
+```bash
+git diff --check
+cd backend && go test ./application/agentbuilder
+```
+
+涉及模型构建或后端路由时，额外运行：
+
+```bash
+cd backend
+go test ./bizpkg/config/modelmgr ./bizpkg/llm/modelbuilder ./application/agentbuilder
+go test -run '^$' ./api/handler/coze ./api/router
+```
+
+涉及前端时，额外运行：
+
+```bash
+make fe
+```
+
+推送并开 PR：
+
+```bash
+git push -u origin feat/your-feature
+```
+
+不要提交：
+
+- `docker/.env`
+- API Key
+- 本地数据库和对象存储数据
+- `common/temp`
+- `node_modules`
+- 前端临时构建缓存
+
+## 15. 常见问题
+
+### 端口被占用
+
+修改 `docker/.env`：
+
+```bash
+WEB_LISTEN_ADDR=127.0.0.1:8890
+```
+
+然后重新启动：
+
+```bash
+make web
+```
+
+### 登录接口正常，但 API 返回 `missing session_key in cookie`
+
+说明当前请求没有登录态。请先通过浏览器登录，再从页面操作。脚本调试时需要手动带上：
+
+```http
+Cookie: session_key=<登录后的 session>
+```
+
+### `space_id` 类型错误
+
+`space_id` 是大整数，请在 JSON 中传字符串：
+
+```json
+{
+  "space_id": "7644856009260793856"
+}
+```
+
+### 自然语言创建智能体生成失败
+
+检查：
+
+- `NL2AGENT_BUILTIN_CM_TYPE=qwen`
+- `NL2AGENT_BUILTIN_CM_QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1`
+- `NL2AGENT_BUILTIN_CM_QWEN_MODEL=qwen-plus`
+- `NL2AGENT_BUILTIN_CM_QWEN_API_KEY` 是否有效
+- 阿里云百炼账号是否有额度和模型权限
+
+### 资源候选为空
+
+这是允许的。说明当前空间没有匹配到已有插件、工作流或知识库。MVP 会展示缺失资源建议，并允许创建基础智能体草稿。
+
+### Docker 构建很慢
+
+首次构建前端镜像会安装 Rush 依赖，耗时较久。后续构建会复用 Docker 缓存。
+
+### 不小心泄露 API Key
+
+立刻在阿里云控制台轮换密钥，并更新本地 `docker/.env` 或部署环境变量。
+
+## 16. 当前验证记录
+
+当前功能已在本地完成以下验证：
+
+- `go test ./bizpkg/config/modelmgr ./bizpkg/llm/modelbuilder ./application/agentbuilder`
+- `go test -run '^$' ./api/handler/coze ./api/router`
+- `git diff --check`
+- `bash scripts/setup/server.sh`
+- `make fe`
+- `make web`
+- Qwen OpenAI 兼容接口 smoke test：HTTP 200
+- `/sign` 页面 smoke test：HTTP 200
+- `/space/1/agent-builder` 页面 smoke test：HTTP 200
+- 端到端：生成 `AgentSpec`、创建智能体草稿、返回 Agent IDE URL
+
+## 17. 致谢
+
+Office Assistant Factory 基于开源 Coze Studio 构建。项目保留上游完整架构、后端服务、前端 Monorepo 和 Apache 2.0 许可证，便于团队持续同步、扩展和二次开发。

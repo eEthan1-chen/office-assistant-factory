@@ -1,0 +1,267 @@
+.page {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+  min-height: 0;
+
+  background: var(--coz-bg-primary, #f7f7fa);
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 72px;
+  padding: 16px 24px;
+
+  background: var(--coz-bg-max, #fff);
+  border-bottom: 1px solid var(--coz-stroke-primary, #e6e8ee);
+}
+
+.title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--coz-fg-primary, #1d1c23);
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--coz-fg-secondary, #6b6f7a);
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 16px;
+
+  min-height: 0;
+  padding: 16px;
+}
+
+.inputPanel,
+.previewPanel {
+  min-height: 0;
+  background: var(--coz-bg-max, #fff);
+  border: 1px solid var(--coz-stroke-primary, #e6e8ee);
+  border-radius: 8px;
+}
+
+.inputPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.inputActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 13px;
+  color: var(--coz-fg-secondary, #6b6f7a);
+}
+
+.error {
+  padding: 10px 12px;
+
+  font-size: 13px;
+  color: #b42318;
+
+  background: #fff1f0;
+  border-radius: 6px;
+}
+
+.previewPanel {
+  overflow: auto;
+  padding: 16px;
+}
+
+.loading,
+.emptyPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 100%;
+  min-height: 360px;
+
+  color: var(--coz-fg-secondary, #6b6f7a);
+}
+
+.specBlock,
+.resourceGroup,
+.notice {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--coz-stroke-primary, #e6e8ee);
+  border-radius: 8px;
+}
+
+.specHead {
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--coz-fg-primary, #1d1c23);
+  }
+
+  p {
+    margin: 6px 0 0;
+    line-height: 20px;
+    color: var(--coz-fg-secondary, #6b6f7a);
+  }
+}
+
+.field {
+  margin-top: 12px;
+
+  span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--coz-fg-secondary, #6b6f7a);
+  }
+
+  p,
+  pre {
+    margin: 0;
+
+    line-height: 22px;
+    color: var(--coz-fg-primary, #1d1c23);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  pre {
+    overflow: auto;
+
+    max-height: 220px;
+    padding: 12px;
+
+    font-family: inherit;
+
+    background: var(--coz-bg-primary, #f7f7fa);
+    border-radius: 6px;
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.resourceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.resourceGroup {
+  margin-bottom: 0;
+
+  h3,
+  .notice h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+.resourceItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--coz-stroke-primary, #e6e8ee);
+}
+
+.resourceMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.resourceTitle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+
+  font-weight: 600;
+  color: var(--coz-fg-primary, #1d1c23);
+}
+
+.resourceDesc,
+.resourceMeta {
+  margin-top: 4px;
+
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--coz-fg-secondary, #6b6f7a);
+  overflow-wrap: anywhere;
+}
+
+.resourceMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty {
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--coz-fg-secondary, #6b6f7a);
+}
+
+.notice {
+  margin-top: 16px;
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+.noticeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 8px 0;
+
+  font-size: 13px;
+  color: var(--coz-fg-secondary, #6b6f7a);
+
+  border-top: 1px solid var(--coz-stroke-primary, #e6e8ee);
+
+  b {
+    color: var(--coz-fg-primary, #1d1c23);
+  }
+}
+
+.warning {
+  background: #fffaf0;
+}
+
+@media (max-width: 960px) {
+  .content,
+  .resourceGrid {
+    grid-template-columns: 1fr;
+  }
+}
