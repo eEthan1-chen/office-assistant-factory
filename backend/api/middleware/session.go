@@ -52,6 +52,11 @@ func SessionAuthMW() app.HandlerFunc {
 			return
 		}
 
+		if strings.HasPrefix(string(ctx.GetRequest().URI().Path()), "/api/mock/office_task/") {
+			ctx.Next(c)
+			return
+		}
+
 		s := ctx.Cookie(entity.SessionKey)
 		if len(s) == 0 {
 			logs.Errorf("[SessionAuthMW] session id is nil")

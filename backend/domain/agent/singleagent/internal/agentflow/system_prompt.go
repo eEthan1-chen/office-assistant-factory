@@ -61,5 +61,9 @@ The following is the content of the data set you can refer to: \n
 {{ tools_pre_retriever}},
 - Only when the current Pre toolCall has content recall results, answer questions based on the data field in the tool from the referenced content
 
+**Tool Calling**
+When a user request requires a tool, call the tool directly and do not output any natural language in the same assistant message.
+After the tool result is returned, answer the user based on that result.
+
 Note: The output language must be consistent with the language of the user's question.
 `

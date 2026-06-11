@@ -906,3 +906,59 @@
       deprecated: false
       method: get
       sub_url: /v5/place/around
+- plugin_id: 23
+  deprecated: false
+  version: v1.0.0
+  openapi_doc_file: office_task.yaml
+  plugin_type: 1
+  manifest:
+    schema_version: v1
+    name_for_model: qiyerenwuguanli
+    name_for_human: 企业任务管理
+    description_for_model: '企业任务管理 mock 插件，支持查询我的待办、今日到期、本周到期、逾期任务、任务详情、任务搜索、任务创建草稿、任务状态更新草稿、会议纪要拆任务、任务摘要和项目任务汇总。写入类能力只生成待用户确认的草稿，不会直接修改任务系统。'
+    description_for_human: '面向超级个人助手的企业任务管理插件。支持待办查询、逾期提醒、会议纪要拆任务、项目任务汇总和任务草稿生成。当前使用 mock 数据，写操作只生成草稿，需用户确认。'
+    auth:
+      type: none
+    logo_url: official_plugin_icon/plugin_lark_task.png
+    api:
+      type: openapi
+    common_params:
+      path: [ ]
+      query: [ ]
+      body: [ ]
+      header:
+        - name: User-Agent
+          value: Coze/1.0
+  tools:
+    - tool_id: 230001
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/list_tasks
+    - tool_id: 230002
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/get_task_detail
+    - tool_id: 230003
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/search_tasks
+    - tool_id: 230004
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/create_task_draft
+    - tool_id: 230005
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/update_task_status_draft
+    - tool_id: 230006
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/extract_action_items
+    - tool_id: 230007
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/daily_digest
+    - tool_id: 230008
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/project_task_summary

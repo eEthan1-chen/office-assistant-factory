@@ -1,0 +1,423 @@
+info:
+  description: |-
+    企业任务管理 mock 插件，面向超级个人助手演示任务跟进能力。
+    支持查询待办、任务详情、任务搜索、创建任务草稿、更新状态草稿、会议纪要拆任务、每日摘要和项目任务汇总。
+    写入类工具只返回待用户确认的草稿，不会直接修改任务系统。
+  title: 企业任务管理
+  version: v1
+openapi: 3.0.1
+paths:
+  /api/mock/office_task/list_tasks:
+    get:
+      operationId: list_my_tasks
+      summary: 查询个人任务列表
+      description: 查询我的待办、今日到期、本周到期、逾期、阻塞或全部任务，返回任务来源、更新时间和任务清单。
+      parameters:
+        - name: scope
+          in: query
+          description: 查询范围，支持 all、today、week、overdue、blocked。
+          schema:
+            type: string
+            default: all
+        - name: status
+          in: query
+          description: 任务状态，支持 todo、in_progress、blocked、done。
+          schema:
+            type: string
+        - name: priority
+          in: query
+          description: 优先级，支持 urgent、high、medium、low。
+          schema:
+            type: string
+        - name: project_id
+          in: query
+          description: 项目 ID，例如 PRJ-ASSISTANT。
+          schema:
+            type: string
+        - name: owner
+          in: query
+          description: 负责人名称。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskListResponse"
+        default:
+          description: ""
+  /api/mock/office_task/get_task_detail:
+    get:
+      operationId: get_task_detail
+      summary: 查看任务详情
+      parameters:
+        - name: task_id
+          in: query
+          required: true
+          description: 任务 ID，例如 TASK-1001。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 任务详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDetailResponse"
+        default:
+          description: ""
+  /api/mock/office_task/search_tasks:
+    post:
+      operationId: search_tasks
+      summary: 搜索任务
+      description: 按关键词、项目、负责人、状态、优先级搜索任务。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyword:
+                  type: string
+                  description: 搜索关键词，可匹配标题、描述、项目、风险、标签。
+                scope:
+                  type: string
+                  description: 查询范围，支持 all、today、week、overdue、blocked。
+                status:
+                  type: string
+                  description: 任务状态，支持 todo、in_progress、blocked、done。
+                priority:
+                  type: string
+                  description: 优先级，支持 urgent、high、medium、low。
+                project_id:
+                  type: string
+                  description: 项目 ID。
+                owner:
+                  type: string
+                  description: 负责人名称。
+      responses:
+        "200":
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskListResponse"
+        default:
+          description: ""
+  /api/mock/office_task/create_task_draft:
+    post:
+      operationId: create_task_draft
+      summary: 创建任务草稿
+      description: 根据自然语言、会议纪要或结构化字段生成任务草稿。不会直接写入任务系统，必须用户确认。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: 任务标题。
+                description:
+                  type: string
+                  description: 任务描述。
+                owner:
+                  type: string
+                  description: 负责人。
+                due_time:
+                  type: string
+                  description: 截止时间，格式 2006-01-02 15:04:05。
+                priority:
+                  type: string
+                  description: 优先级，支持 urgent、high、medium、low。
+                project_id:
+                  type: string
+                  description: 项目 ID。
+                project_name:
+                  type: string
+                  description: 项目名称。
+                source_text:
+                  type: string
+                  description: 原始上下文，例如会议纪要片段或用户自然语言。
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 标签列表。
+      responses:
+        "200":
+          description: 任务草稿
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        default:
+          description: ""
+  /api/mock/office_task/update_task_status_draft:
+    post:
+      operationId: update_task_status_draft
+      summary: 生成任务状态更新草稿
+      description: 生成标记完成、推进中、阻塞或延期草稿。不会直接修改任务系统，必须用户确认。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_id
+                - status
+              properties:
+                task_id:
+                  type: string
+                  description: 任务 ID。
+                status:
+                  type: string
+                  description: 目标状态，支持 todo、in_progress、blocked、done。
+                reason:
+                  type: string
+                  description: 状态变更原因。
+                new_due_time:
+                  type: string
+                  description: 新截止时间，格式 2006-01-02 15:04:05。
+      responses:
+        "200":
+          description: 状态更新草稿
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        default:
+          description: ""
+  /api/mock/office_task/extract_action_items:
+    post:
+      operationId: extract_action_items
+      summary: 从会议纪要拆解行动项
+      description: 从会议纪要或沟通记录中生成待确认的任务草稿清单，不会直接写入任务系统。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transcript
+              properties:
+                meeting_title:
+                  type: string
+                  description: 会议标题。
+                transcript:
+                  type: string
+                  description: 会议纪要、沟通记录或原始文本。
+                project_id:
+                  type: string
+                  description: 项目 ID。
+                project_name:
+                  type: string
+                  description: 项目名称。
+      responses:
+        "200":
+          description: 行动项任务草稿
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        default:
+          description: ""
+  /api/mock/office_task/daily_digest:
+    get:
+      operationId: daily_digest
+      summary: 生成任务摘要
+      description: 生成今日或本周任务摘要、逾期提醒和优先级建议。
+      parameters:
+        - name: scope
+          in: query
+          description: 摘要范围，支持 today、week、all。
+          schema:
+            type: string
+            default: today
+      responses:
+        "200":
+          description: 任务摘要
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigestResponse"
+        default:
+          description: ""
+  /api/mock/office_task/project_task_summary:
+    get:
+      operationId: project_task_summary
+      summary: 汇总项目任务进展
+      description: 根据项目 ID 或项目名称汇总任务进展、风险、阻塞项和下一步建议。
+      parameters:
+        - name: project_id
+          in: query
+          description: 项目 ID，例如 PRJ-ASSISTANT。
+          schema:
+            type: string
+        - name: project_name
+          in: query
+          description: 项目名称。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 项目任务摘要
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectSummaryResponse"
+        default:
+          description: ""
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        task_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        owner:
+          type: string
+        collaborators:
+          type: array
+          items:
+            type: string
+        project_id:
+          type: string
+        project_name:
+          type: string
+        start_time:
+          type: string
+        due_time:
+          type: string
+        updated_at:
+          type: string
+        source_system:
+          type: string
+        source_type:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        risk:
+          type: string
+        next_step:
+          type: string
+        url:
+          type: string
+    TaskListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            source_system:
+              type: string
+            updated_at:
+              type: string
+            total:
+              type: integer
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+    TaskDetailResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            source_system:
+              type: string
+            task:
+              $ref: "#/components/schemas/Task"
+            operations:
+              type: array
+              items:
+                type: string
+    DraftResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            draft_id:
+              type: string
+            requires_confirm:
+              type: boolean
+            confirmation_tip:
+              type: string
+    DigestResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            source_system:
+              type: string
+            updated_at:
+              type: string
+            scope:
+              type: string
+            summary:
+              type: string
+            focus_tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+            overdue_tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+            suggestions:
+              type: array
+              items:
+                type: string
+    ProjectSummaryResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            source_system:
+              type: string
+            updated_at:
+              type: string
+            risk_summary:
+              type: string
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/Task"
+servers:
+  - url: http://coze-server:8888
