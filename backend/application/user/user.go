@@ -44,6 +44,26 @@ type UserApplicationService struct {
 	DomainSVC user.User
 }
 
+type SaveSpaceV2Request struct {
+	SpaceID      string `json:"space_id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	IconURI      string `json:"icon_uri"`
+	SpaceType    int64  `json:"space_type"`
+	EnterpriseID string `json:"enterprise_id"`
+}
+
+type SaveSpaceV2Response struct {
+	Data *SaveSpaceRet `json:"data"`
+	Code int64         `json:"code"`
+	Msg  string        `json:"msg"`
+}
+
+type SaveSpaceRet struct {
+	ID           string `json:"id,omitempty"`
+	CheckNotPass bool   `json:"check_not_pass,omitempty"`
+}
+
 // Add a simple email verification function
 func isValidEmail(email string) bool {
 	// If the email string is not in the correct format, it will return an error.
@@ -258,6 +278,39 @@ func (u *UserApplicationService) GetSpaceListV2(ctx context.Context, req *playgr
 			HasMore:               ptr.Of(false),
 		},
 		Code: 0,
+	}, nil
+}
+
+func (u *UserApplicationService) SaveSpaceV2(ctx context.Context, req *SaveSpaceV2Request) (
+	resp *SaveSpaceV2Response, err error,
+) {
+	uid := ctxutil.MustGetUIDFromCtx(ctx)
+
+	var spaceID int64
+	if strings.TrimSpace(req.SpaceID) != "" {
+		spaceID, err = strconv.ParseInt(req.SpaceID, 10, 64)
+		if err != nil {
+			return nil, errorx.New(errno.ErrUserInvalidParamCode, errorx.KV("msg", "invalid space_id"))
+		}
+	}
+
+	domainResp, err := u.DomainSVC.SaveSpace(ctx, &user.SaveSpaceRequest{
+		SpaceID:     spaceID,
+		UserID:      uid,
+		Name:        req.Name,
+		Description: req.Description,
+		IconURI:     req.IconURI,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SaveSpaceV2Response{
+		Data: &SaveSpaceRet{
+			ID: strconv.FormatInt(domainResp.SpaceID, 10),
+		},
+		Code: 0,
+		Msg:  "success",
 	}, nil
 }
 

@@ -18,12 +18,30 @@ package dal
 
 import (
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 
 	"github.com/coze-dev/coze-studio/backend/domain/user/internal/dal/model"
 )
 
 func (dao *SpaceDAO) AddSpaceUser(ctx context.Context, spaceUser *model.SpaceUser) error {
 	return dao.query.SpaceUser.WithContext(ctx).Create(spaceUser)
+}
+
+func (dao *SpaceDAO) GetSpaceUser(ctx context.Context, spaceID, userID int64) (*model.SpaceUser, bool, error) {
+	spaceUser, err := dao.query.SpaceUser.WithContext(ctx).Where(
+		dao.query.SpaceUser.SpaceID.Eq(spaceID),
+		dao.query.SpaceUser.UserID.Eq(userID),
+	).First()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	return spaceUser, true, nil
 }
 
 func (dao *SpaceDAO) GetSpaceList(ctx context.Context, userID int64) ([]*model.SpaceUser, error) {

@@ -342,6 +342,7 @@ func Register(r *server.Hertz) {
 			{
 				_space := _playground_api.Group("/space", _spaceMw()...)
 				_space.POST("/list", append(_getspacelistv2Mw(), coze.GetSpaceListV2)...)
+				_space.POST("/save", coze.SaveSpaceV2)
 			}
 		}
 		{

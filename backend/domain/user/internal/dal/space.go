@@ -39,6 +39,13 @@ func (dao *SpaceDAO) CreateSpace(ctx context.Context, space *model.Space) error 
 	return dao.query.Space.WithContext(ctx).Create(space)
 }
 
+func (dao *SpaceDAO) UpdateSpace(ctx context.Context, spaceID int64, updates map[string]any) error {
+	_, err := dao.query.Space.WithContext(ctx).Where(
+		dao.query.Space.ID.Eq(spaceID),
+	).Updates(updates)
+	return err
+}
+
 func (dao *SpaceDAO) GetSpaceByIDs(ctx context.Context, spaceIDs []int64) ([]*model.Space, error) {
 	return dao.query.Space.WithContext(ctx).Where(
 		dao.query.Space.ID.In(spaceIDs...),

@@ -297,8 +297,8 @@ func (u *userImpl) Create(ctx context.Context, req *CreateUserRequest) (user *us
 
 		err = u.SpaceRepo.CreateSpace(ctx, &model.Space{
 			ID:          sid,
-			Name:        "Personal Space",
-			Description: "This is your personal space",
+			Name:        "个人空间",
+			Description: "默认个人工作空间",
 			IconURI:     uploadEntity.EnterpriseIconURI,
 			OwnerID:     userID,
 			CreatorID:   userID,
@@ -497,6 +497,73 @@ func (u *userImpl) GetUserSpaceBySpaceID(ctx context.Context, spaceID []int64) (
 	return slices.Transform(spaceModels, func(sm *model.Space) *userEntity.Space {
 		return spacePo2Do(sm, urls[sm.IconURI])
 	}), nil
+}
+
+func (u *userImpl) SaveSpace(ctx context.Context, req *SaveSpaceRequest) (resp *SaveSpaceResponse, err error) {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return nil, errorx.New(errno.ErrUserInvalidParamCode, errorx.KV("msg", "space name cannot be empty"))
+	}
+
+	now := time.Now().UnixMilli()
+	if req.SpaceID > 0 {
+		spaceUser, exist, err := u.SpaceRepo.GetSpaceUser(ctx, req.SpaceID, req.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if !exist || spaceUser.RoleType != 1 {
+			return nil, errorx.New(errno.ErrUserPermissionCode, errorx.KV("msg", "only space owner can edit space"))
+		}
+
+		updates := map[string]any{
+			"name":        name,
+			"description": strings.TrimSpace(req.Description),
+			"updated_at":  now,
+		}
+		if req.IconURI != "" {
+			updates["icon_uri"] = req.IconURI
+		}
+		if err := u.SpaceRepo.UpdateSpace(ctx, req.SpaceID, updates); err != nil {
+			return nil, err
+		}
+
+		return &SaveSpaceResponse{SpaceID: req.SpaceID}, nil
+	}
+
+	spaceID, err := u.IDGen.GenID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("gen space_id failed: %w", err)
+	}
+
+	iconURI := req.IconURI
+	if iconURI == "" {
+		iconURI = uploadEntity.EnterpriseIconURI
+	}
+
+	if err := u.SpaceRepo.CreateSpace(ctx, &model.Space{
+		ID:          spaceID,
+		Name:        name,
+		Description: strings.TrimSpace(req.Description),
+		IconURI:     iconURI,
+		OwnerID:     req.UserID,
+		CreatorID:   req.UserID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := u.SpaceRepo.AddSpaceUser(ctx, &model.SpaceUser{
+		SpaceID:   spaceID,
+		UserID:    req.UserID,
+		RoleType:  1,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &SaveSpaceResponse{SpaceID: spaceID}, nil
 }
 
 func spacePo2Do(space *model.Space, iconUrl string) *userEntity.Space {

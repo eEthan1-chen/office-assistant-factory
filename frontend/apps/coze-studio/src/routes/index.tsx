@@ -32,7 +32,6 @@ import {
   AgentPublishPage,
   Redirect,
   spaceSubMenu,
-  exploreSubMenu,
   WorkflowPage,
   SearchPage,
   ProjectIDE,
@@ -287,42 +286,41 @@ export const router: ReturnType<typeof createBrowserRouter> =
                   requireAuth: true,
                 }),
               },
-
-              // explore
-              {
-                path: 'explore',
-                Component: null,
-                loader: () => ({
-                  hasSider: true,
-                  requireAuth: true,
-                  subMenu: exploreSubMenu,
-                  menuKey: BaseEnum.Explore,
-                }),
-                children: [
-                  {
-                    index: true,
-                    element: <Navigate to="plugin" replace />,
-                  },
-                  // plugin store
-                  {
-                    path: 'plugin',
-                    element: <ExplorePluginPage />,
-                    loader: () => ({
-                      type: 'plugin',
-                    }),
-                  },
-                  // template
-                  {
-                    path: 'template',
-                    element: <ExploreTemplatePage />,
-                    loader: () => ({
-                      type: 'template',
-                    }),
-                  },
-                ],
-              },
             ]
           : []),
+
+        // enterprise stores
+        {
+          path: 'explore',
+          Component: null,
+          loader: () => ({
+            hasSider: true,
+            requireAuth: true,
+            menuKey: BaseEnum.Explore,
+          }),
+          children: [
+            {
+              index: true,
+              element: <Navigate to="plugin" replace />,
+            },
+            // plugin store
+            {
+              path: 'plugin',
+              element: <ExplorePluginPage />,
+              loader: () => ({
+                type: 'plugin',
+              }),
+            },
+            // template store
+            {
+              path: 'template',
+              element: <ExploreTemplatePage />,
+              loader: () => ({
+                type: 'template',
+              }),
+            },
+          ],
+        },
       ],
     },
   ]);

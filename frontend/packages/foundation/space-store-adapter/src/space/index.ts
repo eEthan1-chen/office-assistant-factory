@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable @coze-arch/max-line-per-function */
 /* eslint-disable max-lines-per-function */
 import { devtools } from 'zustand/middleware';
 import { create } from 'zustand';
@@ -154,7 +153,18 @@ export const useSpaceStore = create<SpaceStoreState & SpaceStoreAction>()(
 
       deleteSpace: _ => Promise.resolve(undefined),
 
-      updateSpace: _ => Promise.resolve({}),
+      updateSpace: async payload => {
+        const res = await PlaygroundApi.SaveSpaceV2(payload);
+
+        if (res.code === 0) {
+          return {
+            id: res.data?.id,
+            check_not_pass: res.data?.check_not_pass,
+          };
+        } else {
+          throw Error(`update error: ${res.msg}`);
+        }
+      },
 
       transferSpace: () => Promise.resolve(undefined),
 
@@ -182,8 +192,8 @@ export const useSpaceStore = create<SpaceStoreState & SpaceStoreAction>()(
 
         if (!res?.has_personal_space) {
           await get().createSpace({
-            name: 'Personal',
-            description: 'Personal Space',
+            name: '个人空间',
+            description: '默认个人工作空间',
             icon_uri: '',
             space_type: SpaceType.Personal,
           });

@@ -21,20 +21,20 @@ import { GlobalLayout } from '@coze-foundation/layout';
 import { useCreateBotAction } from '@coze-foundation/global';
 import { RequireAuthContainer } from '@coze-foundation/account-ui-adapter';
 import { I18n } from '@coze-arch/i18n';
-import { useRouteConfig } from '@coze-arch/bot-hooks';
 import {
   IconCozPlusCircle,
   IconCozWorkspace,
   IconCozWorkspaceFill,
-  IconCozCompass,
-  IconCozCompassFill,
+  IconCozPlugin,
+  IconCozPluginFill,
+  IconCozTemplate,
+  IconCozTemplateFill,
   IconCozDocument,
 } from '@coze-arch/coze-design/icons';
+import { useRouteConfig } from '@coze-arch/bot-hooks';
 
-import { AccountDropdown } from '../account-dropdown';
 import { useHasSider } from './hooks/use-has-sider';
-
-const isOfficeFactoryMinimal = process.env.OFFICE_FACTORY_MINIMAL === 'true';
+import { AccountDropdown } from '../account-dropdown';
 
 export const GlobalLayoutComposed: FC<PropsWithChildren> = ({ children }) => {
   const config = useRouteConfig();
@@ -69,17 +69,20 @@ export const GlobalLayoutComposed: FC<PropsWithChildren> = ({ children }) => {
             path: '/space',
             dataTestId: 'layout_workspace-button',
           },
-          ...(!isOfficeFactoryMinimal
-            ? [
-                {
-                  title: I18n.t('menu_title_store'),
-                  icon: <IconCozCompass />,
-                  activeIcon: <IconCozCompassFill />,
-                  path: '/explore',
-                  dataTestId: 'layout_explore-button',
-                },
-              ]
-            : []),
+          {
+            title: '插件商店',
+            icon: <IconCozPlugin />,
+            activeIcon: <IconCozPluginFill />,
+            path: '/explore/plugin',
+            dataTestId: 'layout-plugin-store-button',
+          },
+          {
+            title: '模版商店',
+            icon: <IconCozTemplate />,
+            activeIcon: <IconCozTemplateFill />,
+            path: '/explore/template',
+            dataTestId: 'layout-template-store-button',
+          },
         ]}
         extras={[
           {

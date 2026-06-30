@@ -50,7 +50,9 @@ type UserRepository interface {
 
 type SpaceRepository interface {
 	CreateSpace(ctx context.Context, space *model.Space) error
+	UpdateSpace(ctx context.Context, spaceID int64, updates map[string]any) error
 	GetSpaceByIDs(ctx context.Context, spaceIDs []int64) ([]*model.Space, error)
 	AddSpaceUser(ctx context.Context, spaceUser *model.SpaceUser) error
+	GetSpaceUser(ctx context.Context, spaceID, userID int64) (*model.SpaceUser, bool, error)
 	GetSpaceList(ctx context.Context, userID int64) ([]*model.SpaceUser, error)
 }
