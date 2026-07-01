@@ -64,6 +64,18 @@ type officeTaskProject struct {
 	Status      string `json:"status"`
 }
 
+type officeTaskSet struct {
+	TaskSetID   string   `json:"task_set_id"`
+	TaskSetName string   `json:"task_set_name"`
+	Description string   `json:"description"`
+	Owner       string   `json:"owner"`
+	Members     []string `json:"members"`
+	Status      string   `json:"status"`
+	ProjectID   string   `json:"project_id"`
+	CreatedAt   string   `json:"created_at"`
+	UpdatedAt   string   `json:"updated_at"`
+}
+
 type listOfficeTasksRequest struct {
 	Scope     string `query:"scope"`
 	Status    string `query:"status"`
@@ -118,6 +130,431 @@ type officeTaskDigestRequest struct {
 type officeProjectSummaryRequest struct {
 	ProjectID   string `query:"project_id"`
 	ProjectName string `query:"project_name"`
+}
+
+type officeTaskInfoAIRequest struct {
+	TaskID  string `query:"task_id"`
+	Keyword string `query:"keyword"`
+}
+
+type officeWorkHourQueryRequest struct {
+	UserName  string `json:"user_name"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+	TaskSetID string `json:"task_set_id"`
+	TaskID    string `json:"task_id"`
+}
+
+type officePersonalWorkHourExportRequest struct {
+	UserName  string `query:"user_name"`
+	StartDate string `query:"start_date"`
+	EndDate   string `query:"end_date"`
+	Format    string `query:"format"`
+}
+
+type officeTaskSetWorkloadRequest struct {
+	TaskSetID string `query:"task_set_id"`
+	StartDate string `query:"start_date"`
+	EndDate   string `query:"end_date"`
+}
+
+type officeTaskSetTaskCountRequest struct {
+	TaskSetID string `query:"task_set_id"`
+}
+
+type officeConfigParamRequest struct {
+	DictType string `query:"dict_type"`
+}
+
+type officeOutsourceWorkloadRequest struct {
+	Department string `query:"department"`
+	StartDate  string `query:"start_date"`
+	EndDate    string `query:"end_date"`
+}
+
+type officeTaskMutationRequest struct {
+	TaskID      string   `json:"task_id"`
+	TaskSetID   string   `json:"task_set_id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Owner       string   `json:"owner"`
+	Priority    string   `json:"priority"`
+	DueTime     string   `json:"due_time"`
+	Reason      string   `json:"reason"`
+	Members     []string `json:"members"`
+}
+
+type officeTaskSetQueryRequest struct {
+	Owner  string `query:"owner"`
+	Status string `query:"status"`
+}
+
+type officeTaskSetMutationRequest struct {
+	TaskSetID   string   `json:"task_set_id"`
+	TaskSetName string   `json:"task_set_name"`
+	Description string   `json:"description"`
+	Owner       string   `json:"owner"`
+	Members     []string `json:"members"`
+	Reason      string   `json:"reason"`
+}
+
+type officeRecycleArchiveQueryRequest struct {
+	Area     string `query:"area"`
+	Page     int    `query:"page"`
+	PageSize int    `query:"page_size"`
+}
+
+type officeQueryTasksRequest struct {
+	Keyword         string `query:"keyword"`
+	Status          string `query:"status"`
+	Priority        string `query:"priority"`
+	TaskSetID       string `query:"task_set_id"`
+	Owner           string `query:"owner"`
+	IncludeArchived bool   `query:"include_archived"`
+}
+
+func GetOfficeMockTaskInfoForAI(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskInfoAIRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	tasks := mockOfficeTasks(now)
+	if strings.TrimSpace(req.TaskID) != "" {
+		for _, task := range tasks {
+			if strings.EqualFold(task.TaskID, req.TaskID) {
+				officeTaskMockOK(c, map[string]any{
+					"source_system": "Mock 任务管理系统",
+					"updated_at":    now.Format(officeTaskTimeLayout),
+					"task":          task,
+					"ai_hint":       "这是供 AI 查询的任务详情 mock 数据。",
+				})
+				return
+			}
+		}
+		c.JSON(consts.StatusOK, officeTaskAPIResponse{
+			Code: 404,
+			Msg:  "task not found",
+			Data: map[string]any{"task_id": req.TaskID},
+		})
+		return
+	}
+
+	filtered := filterOfficeTasks(tasks, officeTaskFilter{Keyword: req.Keyword, Now: now})
+	sortOfficeTasks(filtered)
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 任务管理系统",
+		"updated_at":    now.Format(officeTaskTimeLayout),
+		"keyword":       req.Keyword,
+		"total":         len(filtered),
+		"tasks":         filtered,
+		"ai_hint":       "未传 task_id 时返回匹配任务列表，供 AI 继续追问或汇总。",
+	})
+}
+
+func CountOfficeMockWorkHoursForAI(ctx context.Context, c *app.RequestContext) {
+	var req officeWorkHourQueryRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	tasks := filterOfficeTasks(mockOfficeTasks(now), officeTaskFilter{
+		Owner:     req.UserName,
+		ProjectID: officeProjectIDForTaskSet(req.TaskSetID),
+		Now:       now,
+	})
+	if req.TaskID != "" {
+		tasks = filterTasksByID(tasks, req.TaskID)
+	}
+	records, totalHours := mockOfficeWorkHourRecords(tasks)
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 工时系统",
+		"updated_at":    now.Format(officeTaskTimeLayout),
+		"user_name":     defaultString(req.UserName, "当前用户"),
+		"start_date":    defaultString(req.StartDate, now.AddDate(0, 0, -7).Format("2006-01-02")),
+		"end_date":      defaultString(req.EndDate, now.Format("2006-01-02")),
+		"task_set_id":   req.TaskSetID,
+		"total_hours":   totalHours,
+		"records":       records,
+	})
+}
+
+func ExportOfficeMockPersonalWorkHours(ctx context.Context, c *app.RequestContext) {
+	var req officePersonalWorkHourExportRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	format := defaultString(req.Format, "xlsx")
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 工时系统",
+		"mock_only":     true,
+		"export_id":     fmt.Sprintf("mock-workhour-export-%d", now.Unix()),
+		"file_name":     fmt.Sprintf("%s_个人工时汇总_%s.%s", defaultString(req.UserName, "当前用户"), now.Format("20060102"), format),
+		"download_url":  "https://task.example.local/mock-export/personal-work-hours." + format,
+		"user_name":     defaultString(req.UserName, "当前用户"),
+		"start_date":    defaultString(req.StartDate, now.AddDate(0, 0, -30).Format("2006-01-02")),
+		"end_date":      defaultString(req.EndDate, now.Format("2006-01-02")),
+		"expires_at":    now.Add(24 * time.Hour).Format(officeTaskTimeLayout),
+	})
+}
+
+func GetOfficeMockTaskSetMemberWorkload(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskSetWorkloadRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	taskSet := findOfficeTaskSet(req.TaskSetID)
+	tasks := filterOfficeTasks(mockOfficeTasks(now), officeTaskFilter{ProjectID: taskSet.ProjectID, Now: now})
+	workloads := []map[string]any{}
+	for idx, member := range taskSet.Members {
+		workloads = append(workloads, map[string]any{
+			"user_name":      member,
+			"assigned_tasks": 1 + idx,
+			"done_tasks":     idx % 2,
+			"total_hours":    float64(8 + idx*3),
+			"workload_level": []string{"normal", "high", "normal", "low"}[idx%4],
+		})
+	}
+
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 报表统计系统",
+		"updated_at":    now.Format(officeTaskTimeLayout),
+		"task_set":      taskSet,
+		"task_total":    len(tasks),
+		"start_date":    defaultString(req.StartDate, now.AddDate(0, 0, -7).Format("2006-01-02")),
+		"end_date":      defaultString(req.EndDate, now.Format("2006-01-02")),
+		"workloads":     workloads,
+	})
+}
+
+func CountOfficeMockTaskSetTasks(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskSetTaskCountRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	taskSet := findOfficeTaskSet(req.TaskSetID)
+	tasks := filterOfficeTasks(mockOfficeTasks(now), officeTaskFilter{ProjectID: taskSet.ProjectID, Now: now})
+	counts := map[string]int{"todo": 0, "in_progress": 0, "blocked": 0, "done": 0, "archived": 1, "deleted": 1}
+	for _, task := range tasks {
+		counts[task.Status]++
+	}
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 任务管理系统",
+		"updated_at":    now.Format(officeTaskTimeLayout),
+		"task_set":      taskSet,
+		"total":         len(tasks) + counts["archived"] + counts["deleted"],
+		"counts":        counts,
+	})
+}
+
+func GetOfficeMockConfigParams(ctx context.Context, c *app.RequestContext) {
+	var req officeConfigParamRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	dicts := mockOfficeConfigParams()
+	dictType := strings.TrimSpace(req.DictType)
+	if dictType != "" {
+		officeTaskMockOK(c, map[string]any{
+			"source_system": "Mock 配置中心",
+			"dict_type":     dictType,
+			"items":         dicts[dictType],
+		})
+		return
+	}
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 配置中心",
+		"dicts":         dicts,
+	})
+}
+
+func GetOfficeMockOutsourceWorkloadSum(ctx context.Context, c *app.RequestContext) {
+	var req officeOutsourceWorkloadRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	department := defaultString(req.Department, "数字化处")
+	officeTaskMockOK(c, map[string]any{
+		"source_system":            "Mock 报表统计系统",
+		"department":               department,
+		"start_date":               defaultString(req.StartDate, now.AddDate(0, 0, -30).Format("2006-01-02")),
+		"end_date":                 defaultString(req.EndDate, now.Format("2006-01-02")),
+		"outsource_total_hours":    126.5,
+		"outsource_person_count":   5,
+		"average_hours_per_person": 25.3,
+		"top_task_set":             "超级个人助手项目",
+		"statistical_description":  "mock 数据：按处室和时间范围汇总外包人员工作量。",
+		"generated_at":             now.Format(officeTaskTimeLayout),
+	})
+}
+
+func CreateOfficeMockMainTask(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskMutationRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Title) == "" {
+		invalidParamRequestResponse(c, "title is required")
+		return
+	}
+	officeTaskMockMutationOK(c, "新增主任务", map[string]any{
+		"task_id":     fmt.Sprintf("TASK-MOCK-%d", officeTaskNow().Unix()),
+		"task_set_id": req.TaskSetID,
+		"title":       req.Title,
+		"owner":       defaultString(req.Owner, "当前用户"),
+		"priority":    defaultString(req.Priority, "medium"),
+		"due_time":    req.DueTime,
+	})
+}
+
+func ListOfficeMockTaskSets(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskSetQueryRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	taskSets := filterOfficeTaskSets(mockOfficeTaskSets(officeTaskNow()), req.Owner, req.Status)
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 任务管理系统",
+		"total":         len(taskSets),
+		"task_sets":     taskSets,
+	})
+}
+
+func ArchiveOfficeMockTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "归档任务集")
+}
+
+func RestoreOfficeMockArchivedTask(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskMutation(c, "恢复已归档的任务")
+}
+
+func RestoreOfficeMockDeletedTask(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskMutation(c, "恢复已删除的任务")
+}
+
+func UpdateOfficeMockTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "修改任务集信息")
+}
+
+func ActivateOfficeMockArchivedTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "激活归档的任务集")
+}
+
+func DeleteOfficeMockTask(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskMutation(c, "删除任务")
+}
+
+func HardDeleteOfficeMockTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "物理删除任务集")
+}
+
+func RestoreOfficeMockDeletedTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "恢复删除的任务集")
+}
+
+func CreateOfficeMockTaskSet(ctx context.Context, c *app.RequestContext) {
+	var req officeTaskSetMutationRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.TaskSetName) == "" {
+		invalidParamRequestResponse(c, "task_set_name is required")
+		return
+	}
+	officeTaskMockMutationOK(c, "任务集新增", map[string]any{
+		"task_set_id":   fmt.Sprintf("TS-MOCK-%d", officeTaskNow().Unix()),
+		"task_set_name": req.TaskSetName,
+		"description":   req.Description,
+		"owner":         defaultString(req.Owner, "当前用户"),
+		"members":       req.Members,
+	})
+}
+
+func QueryOfficeMockTaskRecycleArchive(ctx context.Context, c *app.RequestContext) {
+	var req officeRecycleArchiveQueryRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	area := defaultString(req.Area, "all")
+	page := req.Page
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := req.PageSize
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	items := mockOfficeRecycleArchiveItems(now, area)
+	officeTaskMockOK(c, map[string]any{
+		"source_system": "Mock 任务管理系统",
+		"area":          area,
+		"page":          page,
+		"page_size":     pageSize,
+		"total":         len(items),
+		"items":         items,
+	})
+}
+
+func ChangeOfficeMockTaskSetMembers(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "改变任务集成员")
+}
+
+func SoftDeleteOfficeMockTaskSet(ctx context.Context, c *app.RequestContext) {
+	handleOfficeTaskSetMutation(c, "逻辑删除任务集")
+}
+
+func QueryOfficeMockTasks(ctx context.Context, c *app.RequestContext) {
+	var req officeQueryTasksRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+
+	now := officeTaskNow()
+	tasks := filterOfficeTasks(mockOfficeTasks(now), officeTaskFilter{
+		Status:    req.Status,
+		Priority:  req.Priority,
+		ProjectID: officeProjectIDForTaskSet(req.TaskSetID),
+		Owner:     req.Owner,
+		Keyword:   req.Keyword,
+		Now:       now,
+	})
+	sortOfficeTasks(tasks)
+	if req.IncludeArchived || req.Status == "archived" {
+		tasks = append(tasks, mockArchivedOfficeTask(now))
+	}
+	officeTaskMockOK(c, map[string]any{
+		"source_system":    "Mock 任务管理系统",
+		"updated_at":       now.Format(officeTaskTimeLayout),
+		"include_archived": req.IncludeArchived,
+		"total":            len(tasks),
+		"tasks":            tasks,
+	})
 }
 
 func ListOfficeMockTasks(ctx context.Context, c *app.RequestContext) {
@@ -589,6 +1026,259 @@ func mockOfficeTask(id, title, desc, status, priority, owner string, collaborato
 		NextStep:     nextStep,
 		URL:          "https://task.example.local/tasks/" + strings.ToLower(id),
 	}
+}
+
+func mockArchivedOfficeTask(now time.Time) officeTask {
+	task := mockOfficeTask("TASK-ARCH-1001", "归档：完成个人助手任务插件初版评审", "已完成并归档的任务，用于演示包含归档的查询。", "archived", "medium", "当前用户", []string{"项目经理"}, "PRJ-ASSISTANT", "超级个人助手项目", -12*24*time.Hour, -7*24*time.Hour, "企业任务管理系统", "archived_task", []string{"归档", "插件"}, "已归档", "如需继续处理可调用恢复归档任务接口", now)
+	task.UpdatedAt = now.Add(-7 * 24 * time.Hour).Format(officeTaskTimeLayout)
+	return task
+}
+
+func mockOfficeTaskSets(now time.Time) []officeTaskSet {
+	return []officeTaskSet{
+		{
+			TaskSetID:   "TS-ASSISTANT",
+			TaskSetName: "超级个人助手项目",
+			Description: "个人助手、插件能力和演示闭环相关任务。",
+			Owner:       "当前用户",
+			Members:     []string{"当前用户", "赵敏", "王强", "项目经理"},
+			Status:      "active",
+			ProjectID:   "PRJ-ASSISTANT",
+			CreatedAt:   now.AddDate(0, -1, 0).Format(officeTaskTimeLayout),
+			UpdatedAt:   now.Add(-2 * time.Hour).Format(officeTaskTimeLayout),
+		},
+		{
+			TaskSetID:   "TS-OFFICE",
+			TaskSetName: "办公效率提升项目",
+			Description: "行政、财务、会议室和流程优化相关任务。",
+			Owner:       "产品经理",
+			Members:     []string{"当前用户", "李雷", "韩梅梅", "陈晨"},
+			Status:      "active",
+			ProjectID:   "PRJ-OFFICE",
+			CreatedAt:   now.AddDate(0, -2, 0).Format(officeTaskTimeLayout),
+			UpdatedAt:   now.Add(-4 * time.Hour).Format(officeTaskTimeLayout),
+		},
+		{
+			TaskSetID:   "TS-DEMO",
+			TaskSetName: "终评演示准备",
+			Description: "终评材料、演示脚本和备用数据。",
+			Owner:       "当前用户",
+			Members:     []string{"当前用户", "评审组", "李雷"},
+			Status:      "archived",
+			ProjectID:   "PRJ-DEMO",
+			CreatedAt:   now.AddDate(0, -1, -10).Format(officeTaskTimeLayout),
+			UpdatedAt:   now.AddDate(0, 0, -3).Format(officeTaskTimeLayout),
+		},
+	}
+}
+
+func filterOfficeTaskSets(taskSets []officeTaskSet, owner, status string) []officeTaskSet {
+	owner = strings.ToLower(strings.TrimSpace(owner))
+	status = strings.ToLower(strings.TrimSpace(status))
+	filtered := make([]officeTaskSet, 0, len(taskSets))
+	for _, taskSet := range taskSets {
+		if status != "" && strings.ToLower(taskSet.Status) != status {
+			continue
+		}
+		if owner != "" && !strings.Contains(strings.ToLower(taskSet.Owner+" "+strings.Join(taskSet.Members, " ")), owner) {
+			continue
+		}
+		filtered = append(filtered, taskSet)
+	}
+	return filtered
+}
+
+func findOfficeTaskSet(taskSetID string) officeTaskSet {
+	taskSetID = strings.ToLower(strings.TrimSpace(taskSetID))
+	taskSets := mockOfficeTaskSets(officeTaskNow())
+	for _, taskSet := range taskSets {
+		if taskSetID != "" && strings.ToLower(taskSet.TaskSetID) == taskSetID {
+			return taskSet
+		}
+	}
+	return taskSets[0]
+}
+
+func officeProjectIDForTaskSet(taskSetID string) string {
+	if strings.TrimSpace(taskSetID) == "" {
+		return ""
+	}
+	return findOfficeTaskSet(taskSetID).ProjectID
+}
+
+func filterTasksByID(tasks []officeTask, taskID string) []officeTask {
+	filtered := make([]officeTask, 0, len(tasks))
+	for _, task := range tasks {
+		if strings.EqualFold(task.TaskID, taskID) {
+			filtered = append(filtered, task)
+		}
+	}
+	return filtered
+}
+
+func mockOfficeWorkHourRecords(tasks []officeTask) ([]map[string]any, float64) {
+	records := make([]map[string]any, 0, len(tasks))
+	total := 0.0
+	for idx, task := range tasks {
+		hours := float64(2+idx*2) + 0.5
+		if task.Priority == "urgent" || task.Priority == "high" {
+			hours += 1
+		}
+		total += hours
+		records = append(records, map[string]any{
+			"task_id":       task.TaskID,
+			"task_title":    task.Title,
+			"task_set_id":   taskSetIDForProject(task.ProjectID),
+			"task_set_name": task.ProjectName,
+			"user_name":     task.Owner,
+			"work_hours":    hours,
+			"work_date":     officeTaskNow().AddDate(0, 0, -idx).Format("2006-01-02"),
+			"description":   "mock 工时记录",
+		})
+	}
+	return records, total
+}
+
+func taskSetIDForProject(projectID string) string {
+	switch projectID {
+	case "PRJ-ASSISTANT":
+		return "TS-ASSISTANT"
+	case "PRJ-OFFICE":
+		return "TS-OFFICE"
+	case "PRJ-DEMO":
+		return "TS-DEMO"
+	default:
+		return "TS-UNKNOWN"
+	}
+}
+
+func mockOfficeConfigParams() map[string][]map[string]string {
+	return map[string][]map[string]string{
+		"task_status": {
+			{"label": "待处理", "value": "todo"},
+			{"label": "进行中", "value": "in_progress"},
+			{"label": "阻塞", "value": "blocked"},
+			{"label": "已完成", "value": "done"},
+			{"label": "已归档", "value": "archived"},
+		},
+		"task_priority": {
+			{"label": "紧急", "value": "urgent"},
+			{"label": "高", "value": "high"},
+			{"label": "中", "value": "medium"},
+			{"label": "低", "value": "low"},
+		},
+		"task_set_status": {
+			{"label": "启用", "value": "active"},
+			{"label": "已归档", "value": "archived"},
+			{"label": "已删除", "value": "deleted"},
+		},
+		"workload_level": {
+			{"label": "低负载", "value": "low"},
+			{"label": "正常", "value": "normal"},
+			{"label": "高负载", "value": "high"},
+		},
+	}
+}
+
+func mockOfficeRecycleArchiveItems(now time.Time, area string) []map[string]any {
+	items := []map[string]any{
+		{
+			"item_type":    "task",
+			"area":         "archive",
+			"task_id":      "TASK-ARCH-1001",
+			"title":        "归档：完成个人助手任务插件初版评审",
+			"task_set_id":  "TS-ASSISTANT",
+			"operator":     "当前用户",
+			"operated_at":  now.AddDate(0, 0, -7).Format(officeTaskTimeLayout),
+			"restore_hint": "可调用恢复已归档的任务接口",
+		},
+		{
+			"item_type":    "task",
+			"area":         "recycle",
+			"task_id":      "TASK-DEL-1001",
+			"title":        "已删除：旧版插件字段梳理",
+			"task_set_id":  "TS-ASSISTANT",
+			"operator":     "当前用户",
+			"operated_at":  now.AddDate(0, 0, -2).Format(officeTaskTimeLayout),
+			"restore_hint": "可调用恢复已删除的任务接口",
+		},
+		{
+			"item_type":     "task_set",
+			"area":          "recycle",
+			"task_set_id":   "TS-OLD-DEMO",
+			"task_set_name": "旧版演示任务集",
+			"operator":      "项目经理",
+			"operated_at":   now.AddDate(0, 0, -5).Format(officeTaskTimeLayout),
+			"restore_hint":  "可调用恢复删除的任务集接口",
+		},
+	}
+	area = strings.ToLower(strings.TrimSpace(area))
+	if area == "" || area == "all" {
+		return items
+	}
+	filtered := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if item["area"] == area {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
+
+func handleOfficeTaskMutation(c *app.RequestContext, operation string) {
+	var req officeTaskMutationRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.TaskID) == "" {
+		invalidParamRequestResponse(c, "task_id is required")
+		return
+	}
+	officeTaskMockMutationOK(c, operation, map[string]any{
+		"task_id":     req.TaskID,
+		"task_set_id": req.TaskSetID,
+		"reason":      req.Reason,
+	})
+}
+
+func handleOfficeTaskSetMutation(c *app.RequestContext, operation string) {
+	var req officeTaskSetMutationRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		invalidParamRequestResponse(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.TaskSetID) == "" {
+		invalidParamRequestResponse(c, "task_set_id is required")
+		return
+	}
+	officeTaskMockMutationOK(c, operation, map[string]any{
+		"task_set_id":   req.TaskSetID,
+		"task_set_name": req.TaskSetName,
+		"description":   req.Description,
+		"owner":         req.Owner,
+		"members":       req.Members,
+		"reason":        req.Reason,
+	})
+}
+
+func officeTaskMockMutationOK(c *app.RequestContext, operation string, payload map[string]any) {
+	now := officeTaskNow()
+	payload["operation"] = operation
+	payload["mock_only"] = true
+	payload["requires_confirm"] = true
+	payload["simulated_status"] = "success"
+	payload["confirmation_tip"] = "当前为 mock 接口，只返回模拟结果，不会修改真实任务管理系统。"
+	payload["operated_at"] = now.Format(officeTaskTimeLayout)
+	officeTaskMockOK(c, payload)
+}
+
+func officeTaskMockOK(c *app.RequestContext, data map[string]any) {
+	c.JSON(consts.StatusOK, officeTaskAPIResponse{
+		Code: 0,
+		Msg:  "ok",
+		Data: data,
+	})
 }
 
 func findOfficeProject(projectID, projectName string) officeTaskProject {

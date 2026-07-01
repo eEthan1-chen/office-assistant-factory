@@ -136,7 +136,7 @@ func inferOfficeTaskPreCallTools(input *schema.Message, plugins []*bot_common.Pl
 	}
 
 	for _, plugin := range plugins {
-		if plugin == nil || plugin.GetApiName() != "list_my_tasks" {
+		if plugin == nil || plugin.GetApiName() != "query_tasks" {
 			continue
 		}
 
@@ -145,7 +145,7 @@ func inferOfficeTaskPreCallTools(input *schema.Message, plugins []*bot_common.Pl
 				PluginID:   plugin.GetPluginId(),
 				ToolID:     plugin.GetApiId(),
 				ToolName:   plugin.GetApiName(),
-				Arguments:  `{"scope":"all"}`,
+				Arguments:  `{"include_archived":true}`,
 				Type:       agentrun.ToolTypePlugin,
 				PluginFrom: plugin.PluginFrom,
 			},

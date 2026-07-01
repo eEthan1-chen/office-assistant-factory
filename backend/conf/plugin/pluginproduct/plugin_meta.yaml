@@ -915,8 +915,8 @@
     schema_version: v1
     name_for_model: qiyerenwuguanli
     name_for_human: 企业任务管理
-    description_for_model: '企业任务管理 mock 插件，支持查询我的待办、今日到期、本周到期、逾期任务、任务详情、任务搜索、任务创建草稿、任务状态更新草稿、会议纪要拆任务、任务摘要和项目任务汇总。写入类能力只生成待用户确认的草稿，不会直接修改任务系统。'
-    description_for_human: '面向超级个人助手的企业任务管理插件。支持待办查询、逾期提醒、会议纪要拆任务、项目任务汇总和任务草稿生成。当前使用 mock 数据，写操作只生成草稿，需用户确认。'
+    description_for_model: '企业任务管理 mock 插件，支持任务查询、任务信息查询、工时统计、个人工时导出、任务集人员工作量统计、任务集任务数量统计、配置参数查询、外包人员工作量统计、任务创建、任务集查询、归档、激活、恢复、删除、创建和成员变更。当前使用 mock 数据，变更类能力只返回模拟结果，不会直接修改真实任务系统。'
+    description_for_human: '面向超级个人助手的企业任务管理插件。支持任务查询、工时统计、任务集管理、报表统计、配置参数查询和回收站/归档区查询。当前使用 mock 数据，写入、删除、归档、恢复等操作只返回模拟结果。'
     auth:
       type: none
     logo_url: official_plugin_icon/plugin_lark_task.png
@@ -933,32 +933,88 @@
     - tool_id: 230001
       deprecated: false
       method: get
-      sub_url: /api/mock/office_task/list_tasks
+      sub_url: /api/mock/office_task/ai_get_task_info
     - tool_id: 230002
       deprecated: false
-      method: get
-      sub_url: /api/mock/office_task/get_task_detail
+      method: post
+      sub_url: /api/mock/office_task/ai_count_work_hours
     - tool_id: 230003
       deprecated: false
-      method: post
-      sub_url: /api/mock/office_task/search_tasks
+      method: get
+      sub_url: /api/mock/office_task/export_personal_work_hours
     - tool_id: 230004
       deprecated: false
-      method: post
-      sub_url: /api/mock/office_task/create_task_draft
+      method: get
+      sub_url: /api/mock/office_task/get_task_set_member_workload
     - tool_id: 230005
       deprecated: false
-      method: post
-      sub_url: /api/mock/office_task/update_task_status_draft
+      method: get
+      sub_url: /api/mock/office_task/count_task_set_tasks
     - tool_id: 230006
       deprecated: false
-      method: post
-      sub_url: /api/mock/office_task/extract_action_items
+      method: get
+      sub_url: /api/mock/office_task/get_config_params
     - tool_id: 230007
       deprecated: false
       method: get
-      sub_url: /api/mock/office_task/daily_digest
+      sub_url: /api/mock/office_task/get_outsource_workload_sum
     - tool_id: 230008
       deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/create_main_task
+    - tool_id: 230009
+      deprecated: false
       method: get
-      sub_url: /api/mock/office_task/project_task_summary
+      sub_url: /api/mock/office_task/list_task_sets
+    - tool_id: 230010
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/archive_task_set
+    - tool_id: 230011
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/restore_archived_task
+    - tool_id: 230012
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/restore_deleted_task
+    - tool_id: 230013
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/update_task_set
+    - tool_id: 230014
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/activate_archived_task_set
+    - tool_id: 230015
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/delete_task
+    - tool_id: 230016
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/hard_delete_task_set
+    - tool_id: 230017
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/restore_deleted_task_set
+    - tool_id: 230018
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/create_task_set
+    - tool_id: 230019
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/query_task_recycle_archive
+    - tool_id: 230020
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/change_task_set_members
+    - tool_id: 230021
+      deprecated: false
+      method: post
+      sub_url: /api/mock/office_task/soft_delete_task_set
+    - tool_id: 230022
+      deprecated: false
+      method: get
+      sub_url: /api/mock/office_task/query_tasks

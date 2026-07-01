@@ -1,27 +1,491 @@
 info:
   description: |-
-    企业任务管理 mock 插件，面向超级个人助手演示任务跟进能力。
-    支持查询待办、任务详情、任务搜索、创建任务草稿、更新状态草稿、会议纪要拆任务、每日摘要和项目任务汇总。
-    写入类工具只返回待用户确认的草稿，不会直接修改任务系统。
+    企业任务管理 mock 插件，面向超级个人助手演示任务管理系统能力。
+    当前只使用 mock 数据，写入、删除、归档、恢复等变更类接口返回模拟结果，不会直接修改真实任务系统。
   title: 企业任务管理
   version: v1
 openapi: 3.0.1
 paths:
-  /api/mock/office_task/list_tasks:
+  /api/mock/office_task/ai_get_task_info:
     get:
-      operationId: list_my_tasks
-      summary: 查询个人任务列表
-      description: 查询我的待办、今日到期、本周到期、逾期、阻塞或全部任务，返回任务来源、更新时间和任务清单。
+      operationId: ai_get_task_info
+      summary: 任务管理系统_任务_查询任务信息_AI
+      description: 查询任务信息，供ai查询。
       parameters:
-        - name: scope
+        - name: task_id
           in: query
-          description: 查询范围，支持 all、today、week、overdue、blocked。
+          description: 任务 ID，例如 TASK-1001。
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          description: 任务关键词，可匹配标题、描述、项目、负责人等。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 任务信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/ai_count_work_hours:
+    post:
+      operationId: ai_count_work_hours
+      summary: 任务管理系统_任务_统计工时信息_AI
+      description: 统计工时信息，供ai查询。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkHourQuery"
+      responses:
+        "200":
+          description: mock 工时统计
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/export_personal_work_hours:
+    get:
+      operationId: export_personal_work_hours
+      summary: 任务管理系统_统计_个人工时导出接口
+      description: 导出个人工时汇总。
+      parameters:
+        - name: user_name
+          in: query
+          description: 人员姓名，默认当前用户。
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: 开始日期，格式 2006-01-02。
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: 结束日期，格式 2006-01-02。
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: 导出格式，支持 xlsx、csv。
+          schema:
+            type: string
+            default: xlsx
+      responses:
+        "200":
+          description: mock 导出信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/get_task_set_member_workload:
+    get:
+      operationId: get_task_set_member_workload
+      summary: 任务管理系统_报表统计_获取任务集底下人员工作量接口
+      description: 获取任务集底下人员工作量。
+      parameters:
+        - name: task_set_id
+          in: query
+          description: 任务集 ID，例如 TS-ASSISTANT。
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: 开始日期，格式 2006-01-02。
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: 结束日期，格式 2006-01-02。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 人员工作量
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/count_task_set_tasks:
+    get:
+      operationId: count_task_set_tasks
+      summary: 任务管理系统_任务集_任务集任务数量统计接口
+      description: 任务集的任务数量统计。
+      parameters:
+        - name: task_set_id
+          in: query
+          description: 任务集 ID。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 任务数量统计
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/get_config_params:
+    get:
+      operationId: get_config_params
+      summary: 任务管理系统_配置参数_查询接口
+      description: 获取字典信息接口。
+      parameters:
+        - name: dict_type
+          in: query
+          description: 字典类型，例如 task_status、task_priority、task_set_status。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 字典信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/get_outsource_workload_sum:
+    get:
+      operationId: get_outsource_workload_sum
+      summary: 任务管理系统_报表统计_获取外包人员工作量之和接口
+      description: 根据处室和时间获取对应外包人员工作量之和。
+      parameters:
+        - name: department
+          in: query
+          description: 处室名称。
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: 开始日期，格式 2006-01-02。
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: 结束日期，格式 2006-01-02。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 外包工作量之和
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/create_main_task:
+    post:
+      operationId: create_main_task
+      summary: 任务管理系统_任务_创建接口
+      description: 新增主任务。mock 阶段只返回模拟创建结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskMutation"
+      responses:
+        "200":
+          description: mock 创建结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/list_task_sets:
+    get:
+      operationId: list_task_sets
+      summary: 任务管理系统_任务集_查询接口
+      description: 获取所属任务集列表。
+      parameters:
+        - name: owner
+          in: query
+          description: 负责人或成员姓名。
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: 任务集状态，支持 active、archived、deleted。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mock 任务集列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/archive_task_set:
+    post:
+      operationId: archive_task_set
+      summary: 任务管理系统_任务集_归档任务集接口
+      description: 根据taskSetId归档任务集。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 归档结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/restore_archived_task:
+    post:
+      operationId: restore_archived_task
+      summary: 任务管理系统_任务_恢复已归档的任务接口
+      description: 恢复已归档的任务。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskMutation"
+      responses:
+        "200":
+          description: mock 恢复结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/restore_deleted_task:
+    post:
+      operationId: restore_deleted_task
+      summary: 任务管理系统_任务_恢复已删除的任务接口
+      description: 恢复已删除的任务。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskMutation"
+      responses:
+        "200":
+          description: mock 恢复结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/update_task_set:
+    post:
+      operationId: update_task_set
+      summary: 任务管理系统_任务集_修改任务集信息接口
+      description: 任务集信息修改。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 修改结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/activate_archived_task_set:
+    post:
+      operationId: activate_archived_task_set
+      summary: 任务管理系统_任务集_激活归档的任务集接口
+      description: 根据taskSetId激活归档任务集。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 激活结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/delete_task:
+    post:
+      operationId: delete_task
+      summary: 任务管理系统_任务_删除任务接口
+      description: 删除任务。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskMutation"
+      responses:
+        "200":
+          description: mock 删除结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/hard_delete_task_set:
+    post:
+      operationId: hard_delete_task_set
+      summary: 任务管理系统_任务集_物理删除任务集接口
+      description: 根据taskSetId彻底删除任务集回收站。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 物理删除结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/restore_deleted_task_set:
+    post:
+      operationId: restore_deleted_task_set
+      summary: 任务管理系统_任务集_恢复删除的任务集接口
+      description: 根据taskSetId恢复删除的任务集及关联的任务。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 恢复结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/create_task_set:
+    post:
+      operationId: create_task_set
+      summary: 任务管理系统_任务集_创建接口
+      description: 任务集新增。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 创建结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/query_task_recycle_archive:
+    get:
+      operationId: query_task_recycle_archive
+      summary: 任务管理系统_任务_查询回收站，归档区接口
+      description: 回收站（归档区）分页查询。
+      parameters:
+        - name: area
+          in: query
+          description: 查询区域，支持 recycle、archive、all。
           schema:
             type: string
             default: all
+        - name: page
+          in: query
+          description: 页码。
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          description: 每页数量。
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: mock 回收站归档区列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/change_task_set_members:
+    post:
+      operationId: change_task_set_members
+      summary: 任务管理系统_任务集_改变任务集成员接口
+      description: 改变任务集成员-外部接口使用。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 成员变更结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/soft_delete_task_set:
+    post:
+      operationId: soft_delete_task_set
+      summary: 任务管理系统_任务集_逻辑删除任务集接口
+      description: 根据taskSetId删除任务集及关联的任务（加入回收站）。mock 阶段只返回模拟结果。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSetMutation"
+      responses:
+        "200":
+          description: mock 逻辑删除结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        default:
+          description: ""
+  /api/mock/office_task/query_tasks:
+    get:
+      operationId: query_tasks
+      summary: 任务管理系统_任务_查询接口
+      description: 查询任务(包含归档)。
+      parameters:
+        - name: keyword
+          in: query
+          description: 关键词，可匹配标题、描述、负责人、项目和标签。
+          schema:
+            type: string
         - name: status
           in: query
-          description: 任务状态，支持 todo、in_progress、blocked、done。
+          description: 任务状态，支持 todo、in_progress、blocked、done、archived。
           schema:
             type: string
         - name: priority
@@ -29,9 +493,9 @@ paths:
           description: 优先级，支持 urgent、high、medium、low。
           schema:
             type: string
-        - name: project_id
+        - name: task_set_id
           in: query
-          description: 项目 ID，例如 PRJ-ASSISTANT。
+          description: 任务集 ID。
           schema:
             type: string
         - name: owner
@@ -39,385 +503,99 @@ paths:
           description: 负责人名称。
           schema:
             type: string
-      responses:
-        "200":
-          description: 任务列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskListResponse"
-        default:
-          description: ""
-  /api/mock/office_task/get_task_detail:
-    get:
-      operationId: get_task_detail
-      summary: 查看任务详情
-      parameters:
-        - name: task_id
+        - name: include_archived
           in: query
-          required: true
-          description: 任务 ID，例如 TASK-1001。
+          description: 是否包含归档任务。
           schema:
-            type: string
+            type: boolean
+            default: true
       responses:
         "200":
-          description: 任务详情
+          description: mock 任务列表
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TaskDetailResponse"
-        default:
-          description: ""
-  /api/mock/office_task/search_tasks:
-    post:
-      operationId: search_tasks
-      summary: 搜索任务
-      description: 按关键词、项目、负责人、状态、优先级搜索任务。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                keyword:
-                  type: string
-                  description: 搜索关键词，可匹配标题、描述、项目、风险、标签。
-                scope:
-                  type: string
-                  description: 查询范围，支持 all、today、week、overdue、blocked。
-                status:
-                  type: string
-                  description: 任务状态，支持 todo、in_progress、blocked、done。
-                priority:
-                  type: string
-                  description: 优先级，支持 urgent、high、medium、low。
-                project_id:
-                  type: string
-                  description: 项目 ID。
-                owner:
-                  type: string
-                  description: 负责人名称。
-      responses:
-        "200":
-          description: 搜索结果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskListResponse"
-        default:
-          description: ""
-  /api/mock/office_task/create_task_draft:
-    post:
-      operationId: create_task_draft
-      summary: 创建任务草稿
-      description: 根据自然语言、会议纪要或结构化字段生成任务草稿。不会直接写入任务系统，必须用户确认。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                  description: 任务标题。
-                description:
-                  type: string
-                  description: 任务描述。
-                owner:
-                  type: string
-                  description: 负责人。
-                due_time:
-                  type: string
-                  description: 截止时间，格式 2006-01-02 15:04:05。
-                priority:
-                  type: string
-                  description: 优先级，支持 urgent、high、medium、low。
-                project_id:
-                  type: string
-                  description: 项目 ID。
-                project_name:
-                  type: string
-                  description: 项目名称。
-                source_text:
-                  type: string
-                  description: 原始上下文，例如会议纪要片段或用户自然语言。
-                tags:
-                  type: array
-                  items:
-                    type: string
-                  description: 标签列表。
-      responses:
-        "200":
-          description: 任务草稿
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DraftResponse"
-        default:
-          description: ""
-  /api/mock/office_task/update_task_status_draft:
-    post:
-      operationId: update_task_status_draft
-      summary: 生成任务状态更新草稿
-      description: 生成标记完成、推进中、阻塞或延期草稿。不会直接修改任务系统，必须用户确认。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - task_id
-                - status
-              properties:
-                task_id:
-                  type: string
-                  description: 任务 ID。
-                status:
-                  type: string
-                  description: 目标状态，支持 todo、in_progress、blocked、done。
-                reason:
-                  type: string
-                  description: 状态变更原因。
-                new_due_time:
-                  type: string
-                  description: 新截止时间，格式 2006-01-02 15:04:05。
-      responses:
-        "200":
-          description: 状态更新草稿
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DraftResponse"
-        default:
-          description: ""
-  /api/mock/office_task/extract_action_items:
-    post:
-      operationId: extract_action_items
-      summary: 从会议纪要拆解行动项
-      description: 从会议纪要或沟通记录中生成待确认的任务草稿清单，不会直接写入任务系统。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - transcript
-              properties:
-                meeting_title:
-                  type: string
-                  description: 会议标题。
-                transcript:
-                  type: string
-                  description: 会议纪要、沟通记录或原始文本。
-                project_id:
-                  type: string
-                  description: 项目 ID。
-                project_name:
-                  type: string
-                  description: 项目名称。
-      responses:
-        "200":
-          description: 行动项任务草稿
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DraftResponse"
-        default:
-          description: ""
-  /api/mock/office_task/daily_digest:
-    get:
-      operationId: daily_digest
-      summary: 生成任务摘要
-      description: 生成今日或本周任务摘要、逾期提醒和优先级建议。
-      parameters:
-        - name: scope
-          in: query
-          description: 摘要范围，支持 today、week、all。
-          schema:
-            type: string
-            default: today
-      responses:
-        "200":
-          description: 任务摘要
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DigestResponse"
-        default:
-          description: ""
-  /api/mock/office_task/project_task_summary:
-    get:
-      operationId: project_task_summary
-      summary: 汇总项目任务进展
-      description: 根据项目 ID 或项目名称汇总任务进展、风险、阻塞项和下一步建议。
-      parameters:
-        - name: project_id
-          in: query
-          description: 项目 ID，例如 PRJ-ASSISTANT。
-          schema:
-            type: string
-        - name: project_name
-          in: query
-          description: 项目名称。
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 项目任务摘要
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProjectSummaryResponse"
+                $ref: "#/components/schemas/GenericResponse"
         default:
           description: ""
 components:
   schemas:
-    Task:
+    GenericResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+    WorkHourQuery:
+      type: object
+      properties:
+        user_name:
+          type: string
+          description: 人员姓名，默认当前用户。
+        start_date:
+          type: string
+          description: 开始日期，格式 2006-01-02。
+        end_date:
+          type: string
+          description: 结束日期，格式 2006-01-02。
+        task_set_id:
+          type: string
+          description: 任务集 ID。
+        task_id:
+          type: string
+          description: 任务 ID。
+    TaskMutation:
       type: object
       properties:
         task_id:
           type: string
+          description: 任务 ID。
+        task_set_id:
+          type: string
+          description: 任务集 ID。
         title:
           type: string
+          description: 任务标题。
         description:
           type: string
-        status:
-          type: string
-        priority:
-          type: string
+          description: 任务描述。
         owner:
           type: string
-        collaborators:
-          type: array
-          items:
-            type: string
-        project_id:
+          description: 负责人。
+        priority:
           type: string
-        project_name:
-          type: string
-        start_time:
-          type: string
+          description: 优先级。
         due_time:
           type: string
-        updated_at:
+          description: 截止时间。
+        reason:
           type: string
-        source_system:
+          description: 操作原因。
+    TaskSetMutation:
+      type: object
+      properties:
+        task_set_id:
           type: string
-        source_type:
+          description: 任务集 ID。
+        task_set_name:
           type: string
-        tags:
+          description: 任务集名称。
+        description:
+          type: string
+          description: 任务集描述。
+        owner:
+          type: string
+          description: 负责人。
+        members:
           type: array
           items:
             type: string
-        risk:
+          description: 成员列表。
+        reason:
           type: string
-        next_step:
-          type: string
-        url:
-          type: string
-    TaskListResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-        msg:
-          type: string
-        data:
-          type: object
-          properties:
-            source_system:
-              type: string
-            updated_at:
-              type: string
-            total:
-              type: integer
-            tasks:
-              type: array
-              items:
-                $ref: "#/components/schemas/Task"
-    TaskDetailResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-        msg:
-          type: string
-        data:
-          type: object
-          properties:
-            source_system:
-              type: string
-            task:
-              $ref: "#/components/schemas/Task"
-            operations:
-              type: array
-              items:
-                type: string
-    DraftResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-        msg:
-          type: string
-        data:
-          type: object
-          properties:
-            draft_id:
-              type: string
-            requires_confirm:
-              type: boolean
-            confirmation_tip:
-              type: string
-    DigestResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-        msg:
-          type: string
-        data:
-          type: object
-          properties:
-            source_system:
-              type: string
-            updated_at:
-              type: string
-            scope:
-              type: string
-            summary:
-              type: string
-            focus_tasks:
-              type: array
-              items:
-                $ref: "#/components/schemas/Task"
-            overdue_tasks:
-              type: array
-              items:
-                $ref: "#/components/schemas/Task"
-            suggestions:
-              type: array
-              items:
-                type: string
-    ProjectSummaryResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-        msg:
-          type: string
-        data:
-          type: object
-          properties:
-            source_system:
-              type: string
-            updated_at:
-              type: string
-            risk_summary:
-              type: string
-            tasks:
-              type: array
-              items:
-                $ref: "#/components/schemas/Task"
+          description: 操作原因。
 servers:
   - url: http://coze-server:8888
