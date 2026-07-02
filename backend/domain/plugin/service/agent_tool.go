@@ -381,6 +381,13 @@ func mergeRequestBody(ctx context.Context, dest, src *openapi3.RequestBodyRef) (
 }
 
 func mergeMediaSchema(ctx context.Context, dest, src *openapi3.Schema) (*openapi3.Schema, error) {
+	if dest == nil {
+		return src, nil
+	}
+	if src == nil {
+		return dest, nil
+	}
+
 	if dest.Extensions == nil {
 		dest.Extensions = map[string]any{}
 	}
@@ -396,8 +403,11 @@ func mergeMediaSchema(ctx context.Context, dest, src *openapi3.Schema) (*openapi
 	switch dest.Type {
 	case openapi3.TypeObject:
 		for k, dv := range dest.Properties {
+			if dv == nil || dv.Value == nil {
+				continue
+			}
 			sv, ok := src.Properties[k]
-			if !ok {
+			if !ok || sv == nil || sv.Value == nil {
 				continue
 			}
 
@@ -412,6 +422,10 @@ func mergeMediaSchema(ctx context.Context, dest, src *openapi3.Schema) (*openapi
 		return dest, nil
 
 	case openapi3.TypeArray:
+		if dest.Items == nil || dest.Items.Value == nil || src.Items == nil || src.Items.Value == nil {
+			return dest, nil
+		}
+
 		nv, err := mergeMediaSchema(ctx, dest.Items.Value, src.Items.Value)
 		if err != nil {
 			return nil, err
@@ -441,8 +455,11 @@ func mergeResponseBody(ctx context.Context, dest, src openapi3.Responses) (opena
 		}
 
 		for ct, dm := range dr.Value.Content {
+			if dm == nil || dm.Schema == nil || dm.Schema.Value == nil {
+				continue
+			}
 			sm, ok := sr.Value.Content[ct]
-			if !ok {
+			if !ok || sm == nil || sm.Schema == nil || sm.Schema.Value == nil {
 				continue
 			}
 

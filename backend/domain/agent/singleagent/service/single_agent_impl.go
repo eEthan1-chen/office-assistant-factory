@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/jinzhu/copier"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 
 	"github.com/coze-dev/coze-studio/backend/api/model/app/bot_common"
+	agentrun "github.com/coze-dev/coze-studio/backend/crossdomain/agentrun/model"
 	crossplugin "github.com/coze-dev/coze-studio/backend/crossdomain/plugin"
 	"github.com/coze-dev/coze-studio/backend/crossdomain/plugin/model"
 	"github.com/coze-dev/coze-studio/backend/domain/agent/singleagent/entity"
@@ -99,6 +101,7 @@ func (s *singleAgentImpl) StreamExecute(ctx context.Context, req *entity.Execute
 	if req.Identity.Version == "" {
 		req.Identity.Version = ae.Version
 	}
+	req.PreCallTools = append(req.PreCallTools, inferOfficeTaskPreCallTools(req.Input, ae.Plugin)...)
 
 	conf := &agentflow.Config{
 		Agent:    ae,
@@ -125,6 +128,60 @@ func (s *singleAgentImpl) StreamExecute(ctx context.Context, req *entity.Execute
 		PreCallTools: req.PreCallTools,
 	}
 	return rn.StreamExecute(ctx, rn.PreHandlerReq(ctx, exeReq))
+}
+
+func inferOfficeTaskPreCallTools(input *schema.Message, plugins []*bot_common.PluginInfo) []*agentrun.ToolsRetriever {
+	if input == nil || !isOfficeTaskListQuery(input.Content) {
+		return nil
+	}
+
+	for _, plugin := range plugins {
+		if plugin == nil || plugin.GetApiName() != "query_tasks" {
+			continue
+		}
+
+		return []*agentrun.ToolsRetriever{
+			{
+				PluginID:   plugin.GetPluginId(),
+				ToolID:     plugin.GetApiId(),
+				ToolName:   plugin.GetApiName(),
+				Arguments:  `{"include_archived":true}`,
+				Type:       agentrun.ToolTypePlugin,
+				PluginFrom: plugin.PluginFrom,
+			},
+		}
+	}
+
+	return nil
+}
+
+func isOfficeTaskListQuery(content string) bool {
+	content = strings.TrimSpace(strings.ToLower(content))
+	if content == "" {
+		return false
+	}
+
+	taskWords := []string{"任务", "待办", "todo", "task"}
+	queryWords := []string{"哪些", "有什么", "有哪些", "列表", "list", "查看", "查询"}
+
+	hasTaskWord := false
+	for _, word := range taskWords {
+		if strings.Contains(content, word) {
+			hasTaskWord = true
+			break
+		}
+	}
+	if !hasTaskWord {
+		return false
+	}
+
+	for _, word := range queryWords {
+		if strings.Contains(content, word) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *singleAgentImpl) GetSingleAgent(ctx context.Context, agentID int64, version string) (botInfo *entity.SingleAgent, err error) {

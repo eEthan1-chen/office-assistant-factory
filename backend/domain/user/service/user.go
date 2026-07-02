@@ -63,6 +63,18 @@ type CreateUserResponse struct {
 	UserID int64
 }
 
+type SaveSpaceRequest struct {
+	SpaceID     int64
+	UserID      int64
+	Name        string
+	Description string
+	IconURI     string
+}
+
+type SaveSpaceResponse struct {
+	SpaceID int64
+}
+
 type User interface {
 	SaasUserProvider
 	// Create creates or registers a new user.
@@ -79,6 +91,7 @@ type User interface {
 	ValidateSession(ctx context.Context, sessionKey string) (session *entity.Session, exist bool, err error)
 	GetUserSpaceList(ctx context.Context, userID int64) (spaces []*entity.Space, err error)
 	GetUserSpaceBySpaceID(ctx context.Context, spaceID []int64) (space []*entity.Space, err error)
+	SaveSpace(ctx context.Context, req *SaveSpaceRequest) (resp *SaveSpaceResponse, err error)
 }
 
 type SaasUserProvider interface {
