@@ -60,6 +60,16 @@ func (c *ConversationApplicationService) Run(ctx context.Context, sseSender *sse
 		return ccErr
 	}
 
+	if ar.RegenMessageID == nil || ptr.From(ar.RegenMessageID) == 0 {
+		created, err := c.tryCreateScheduleFromAgentRun(ctx, sseSender, ar, agentInfo.SpaceID, conversationData)
+		if err != nil {
+			return err
+		}
+		if created {
+			return nil
+		}
+	}
+
 	if ar.RegenMessageID != nil && ptr.From(ar.RegenMessageID) > 0 {
 		msgMeta, err := c.MessageDomainSVC.GetByID(ctx, ptr.From(ar.RegenMessageID))
 		if err != nil {

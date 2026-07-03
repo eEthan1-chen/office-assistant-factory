@@ -32,6 +32,7 @@ import (
 	"github.com/coze-dev/coze-studio/backend/application/openauth"
 	"github.com/coze-dev/coze-studio/backend/application/plugin"
 	"github.com/coze-dev/coze-studio/backend/application/prompt"
+	appschedule "github.com/coze-dev/coze-studio/backend/application/schedule"
 	"github.com/coze-dev/coze-studio/backend/application/search"
 	"github.com/coze-dev/coze-studio/backend/application/shortcutcmd"
 	"github.com/coze-dev/coze-studio/backend/application/singleagent"
@@ -263,6 +264,17 @@ func initComplexServices(ctx context.Context, p *primaryServices) (*complexServi
 	}
 
 	conversationSVC := conversation.InitService(p.toConversationComponents(singleAgentSVC))
+	scheduleSVC, err := appschedule.InitService(ctx, &appschedule.ServiceComponents{
+		DB:                    p.infra.DB,
+		IDGen:                 p.infra.IDGenSVC,
+		AgentRunDomainSVC:     conversationSVC.AgentRunDomainSVC,
+		ConversationDomainSVC: conversationSVC.ConversationDomainSVC,
+		SingleAgentDomainSVC:  singleAgentSVC.DomainSVC,
+	})
+	if err != nil {
+		return nil, err
+	}
+	scheduleSVC.StartScheduler(ctx)
 
 	return &complexServices{
 		primaryServices: p,

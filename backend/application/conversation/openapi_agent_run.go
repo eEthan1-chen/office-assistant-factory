@@ -78,6 +78,14 @@ func (a *OpenapiAgentRunApplication) OpenapiAgentRun(ctx context.Context, sseSen
 	}
 
 	spaceID := agentInfo.SpaceID
+	created, err := a.tryCreateScheduleFromChat(ctx, sseSender, ar, connectorID, spaceID, conversationData)
+	if err != nil {
+		return err
+	}
+	if created {
+		return nil
+	}
+
 	arr, err := a.buildAgentRunRequest(ctx, ar, connectorID, spaceID, conversationData)
 	if err != nil {
 		logs.CtxErrorf(ctx, "buildAgentRunRequest err:%v", err)
@@ -543,6 +551,14 @@ func (a *OpenapiAgentRunApplication) OpenapiAgentRunSync(ctx context.Context, ar
 	}
 
 	spaceID := agentInfo.SpaceID
+	resp, created, err := a.tryCreateScheduleFromChatSync(ctx, ar, connectorID, spaceID, conversationData)
+	if err != nil {
+		return nil, err
+	}
+	if created {
+		return resp, nil
+	}
+
 	arr, err := a.buildAgentRunRequest(ctx, ar, connectorID, spaceID, conversationData)
 	if err != nil {
 		logs.CtxErrorf(ctx, "buildAgentRunRequest err:%v", err)
@@ -627,10 +643,10 @@ exitLoop:
 		return nil, errorx.New(errno.ErrConversationAgentRunError, errorx.KV("msg", "no final result received"))
 	}
 
-	resp := &run.RetrieveChatOpenResponse{
+	finalResp := &run.RetrieveChatOpenResponse{
 		ChatDetail: finalChatDetail,
 	}
-	return resp, nil
+	return finalResp, nil
 }
 
 func (a *OpenapiAgentRunApplication) CancelRun(ctx context.Context, req *run.CancelChatApiRequest) (*run.CancelChatApiResponse, error) {
